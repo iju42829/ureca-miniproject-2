@@ -12,11 +12,19 @@
 //			HttpSecurity http		
 //			) throws Exception {
 //		return http
-//				.authorizeHttpRequests(
-//						request->{													
-//							request.anyRequest().permitAll();
-//						})
-//				.build();
+//			 .csrf(csrf -> csrf.disable())
+//			 .authorizeHttpRequests(authz -> authz
+//				.requestMatchers(
+//				    "/ws/**",
+//				    "/topic/**",
+//				    "/app/**",
+//				    "/login",
+//				    "/logout",
+//				    "/**"
+//				).permitAll()            
+//	        )
+//	        .formLogin(form -> form.disable())
+//	        .build();
 //							
 //	}
 //}

@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: miniproject
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+    open-in-view: false
+
+logging:
+  level:
+    com:
+      ureca:
+        miniproject: debug
+
+    org.hibernate.SQL: debug

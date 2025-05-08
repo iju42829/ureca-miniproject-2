@@ -8,7 +8,6 @@ public class MiniprojectApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(MiniprojectApplication.class, args);
-        System.out.println("");
     }
 
 }

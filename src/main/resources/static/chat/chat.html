@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>채팅</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="rulebook-overlay" onclick="toggleRulebook(false)"></div>
+<div id="rulebook-modal">
+    <h4>마피아 게임 룰북</h4>
+    <ul>
+        <li>낮: 120초 토론 후 투표로 마피아를 지목</li>
+        <li>밤: 마피아는 시민을 제거</li>
+        <li>경찰: 밤에 선택한 유저의 직업 확인 가능</li>
+        <li>의사: 밤에 선택한 한 명을 보호 가능</li>
+        <li>모든 마피아가 제거되면 시민 승리</li>
+        <li>시민 수가 마피아 수보다 같거나 적어지면 마피아 승리</li>
+    </ul>
+</div>
+<div class="sidebar">
+    <button onclick="toggleRulebook(true)">룰북 보기</button>
+    <div id="timer">남은 시간: <span id="time">120</span>초</div>
+    <button onclick="endTimerNow()">시간 조기 종료</button>
+    
+</div>
+<div class="main">
+    <header>채팅방</header>
+    <div id="chat-box"></div>
+    <footer>
+        <textarea id="message" placeholder="메시지를 입력하세요" rows="1" style="resize: none; width: 100%;"></textarea>
+        
+        <button onclick="sendMessage()">전송</button>
+    </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+	
+	const roomId = "room123";
+    
+    
+    sessionStorage.setItem("username", "ss");
+    
+    
+    const sender = sessionStorage.getItem("username");
+	const socket = new SockJS("/ws/chat");
+	const stompClient = Stomp.over(socket);
+    stompClient.connect({}, () => {
+        stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
+            const data = JSON.parse(msg.body);
+            const sender = sessionStorage.getItem("username");
+            const isMe = sender === data.sender;
+            displayMessage(data.sender, data.message, isMe);
+        });
+    });
+    function sendMessage() {
+    	if (timeLeft <= 0) return;
+        const sender = sessionStorage.getItem("username"); 
+        const message = document.getElementById("message").value;
+        if (message.length === 0) return;
+
+
+        stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: message,
+            type: "TALK"
+        }));
+        
+        document.getElementById("message").value = '';
+    }
+
+    function displayMessage(sender, message, isMe) {
+        const chatBox = document.getElementById("chat-box");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "message " + (isMe ? "right" : "left");
+        msgDiv.innerHTML = `<div class="sender">${sender}</div><div class="message-content">${message
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>&ZeroWidthSpace;')}</div>`;
+
+
+
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function toggleRulebook(show) {
+        const modal = document.getElementById("rulebook-modal");
+        const overlay = document.getElementById("rulebook-overlay");
+        if (show) {
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        } else {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+    }
+
+    let timeLeft = 120;
+    const timeSpan = document.getElementById("time");
+    const timer = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            timeSpan.textContent = timeLeft;
+        } else {
+            clearInterval(timer);
+            alert("시간이 종료되었습니다!");
+        }
+    }, 1000);
+    function endTimerNow() {
+        timeLeft = 0;
+        timeSpan.textContent = 0;
+        clearInterval(timer);
+        alert("시간이 종료되었습니다!");
+    }
+    document.getElementById("message").addEventListener("keydown", function(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault(); 
+            const message = this.value;
+            if (message !== "") {
+                sendMessage();
+            }
+        }
+    });
+
+</script>
+</body>
+</html>

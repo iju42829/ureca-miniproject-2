@@ -18,6 +18,7 @@
         <li>시민 수가 마피아 수보다 같거나 적어지면 마피아 승리</li>
     </ul>
 </div>
+
 <div id="vote-modal" class="modal">
   <div class="modal-content">
     <h3>투표할 플레이어를 선택하세요</h3>
@@ -27,20 +28,25 @@
 </div>
 
 
+
 <div class="sidebar">
     <button onclick="toggleRulebook(true)">룰북 보기</button>
     <div id="timer">남은 시간: <span id="time">120</span>초</div>
     <button onclick="endTimerNow()">시간 조기 종료</button>
 
+
     <h4>참여자 목록</h4>
     <ul id="participant-list" class="participant-list"></ul>
 </div>
+
 
 <div class="main">
     <header>채팅방</header>
     <div id="chat-box"></div>
     <footer>
         <textarea id="message" placeholder="메시지를 입력하세요" rows="1" style="resize: none; width: 100%;"></textarea>
+
+
         <button onclick="sendMessage()">전송</button>
     </footer>
 </div>
@@ -48,6 +54,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script>
+
     const roomId = "room123";
     const sender = sessionStorage.getItem("username") || "익명";
     sessionStorage.setItem("username", sender);
@@ -97,12 +104,15 @@
         const message = document.getElementById("message").value;
         if (!message.trim()) return;
 
+
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
             roomId: roomId,
             sender: sender,
             message: message,
             type: "TALK"
         }));
+
+
 
         document.getElementById("message").value = '';
     }
@@ -117,6 +127,7 @@
             .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>&ZeroWidthSpace;')}</div>`;
 
+
         chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -127,6 +138,7 @@
         const msgDiv = document.createElement("div");
         msgDiv.className = "notice";
         msgDiv.innerHTML = `<div class="message-notice">${message}</div>`;
+
         chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -134,8 +146,10 @@
     function toggleRulebook(show) {
         const modal = document.getElementById("rulebook-modal");
         const overlay = document.getElementById("rulebook-overlay");
+
         modal.style.display = show ? 'block' : 'none';
         overlay.style.display = show ? 'block' : 'none';
+
     }
 
     let timeLeft = 120;
@@ -147,15 +161,18 @@
         } else {
             clearInterval(timer);
             alert("시간이 종료되었습니다!");
+
             showVoteModal(latestParticipants);
         }
     }, 1000);
+
 
     function endTimerNow() {
         timeLeft = 0;
         timeSpan.textContent = 0;
         clearInterval(timer);
         alert("시간이 종료되었습니다!");
+
         showVoteModal(latestParticipants);
     }
 
@@ -218,3 +235,4 @@
 </script>
 </body>
 </html>
+

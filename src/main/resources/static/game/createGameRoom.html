@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+          integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+</head>
+<body>
+  <h1>게임방 생성</h1>
+  <form id="createRoomForm">
+    <label for="title">방 제목:</label>
+    <input type="text" id="title" name="title" required><br><br>
+
+    <label for="maxPlayer">최대 인원:</label>
+    <input type="number" id="maxPlayer" name="maxPlayer" min="1" required><br><br>
+
+    <input type="hidden" name="_csrf" id="_csrf" value="">
+
+    <button type="submit">게임방 생성</button>
+  </form>
+
+  <script>
+    $(document).ready(function () {
+      fetch('/csrf-token', {
+        method: 'GET',
+        credentials: 'same-origin'
+      })
+              .then(res => res.json())
+              .then(data => {
+                // document.querySelector('#_csrf').value = data.token;
+                $('#_csrf').val(data.token);
+              });
+
+      // 폼 제출 이벤트 처리
+      $('#createRoomForm').submit(function (e) {
+        e.preventDefault();
+
+        const title = $('#title').val();
+        const maxPlayer = parseInt($('#maxPlayer').val());
+        const csrfToken = $('#_csrf').val();
+
+        $.ajax({
+          url: '/api/rooms',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            title: title,
+            maxPlayer: maxPlayer
+          }),
+
+          beforeSend: function (xhr) {
+             xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken);
+          },
+
+          success: function (response) {
+            const data = response.data;
+            window.location.href = '/game/rooms/' + data.roomId;
+          },
+
+          error: function (xhr) {
+            const res = xhr.responseJSON;
+            console.log(res.message);
+          }
+
+        });
+      });
+    });
+  </script>
+</body>
+</html>

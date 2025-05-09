@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+    <h1>register.html</h1>
+    
+    <div>
+        name : <input type="text" name="name" id="name">
+    </div>
+    <div>
+        email : <input type="text" name="email" id="email">
+    </div>
+    <div>
+        password : <input type="password" name="password" id="password">
+    </div>
+    
+    <!-- Add hidden input for CSRF token -->
+    <!-- id 는 _ 시작 X -->
+    <input type="hidden" name="_csrf" value="" id="_csrf">
+    
+    <button id="btnRegister">회원가입</button>
+    
+<script>
+    window.onload = function(){
+        getCsrfToken();
+        
+        document.querySelector("#btnRegister").onclick = register;
+    }
+    
+    async function getCsrfToken(){
+        let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
+        let data = await response.json();
+        document.querySelector('#_csrf').value = data.token;
+    }
+    
+    async function register(){
+        // parameter, value
+        let name = document.querySelector("#name").value;
+        let email = document.querySelector("#email").value;
+        let password = document.querySelector("#password").value;
+        let _csrf = document.querySelector("#_csrf").value;
+        
+        console.log(name, email, password, _csrf);
+        
+        let urlParams = new URLSearchParams({
+            name, email, password, _csrf
+        });
+        
+        // url
+        let url = "api/auth/signup";
+        
+        // post, parameter
+        let fetchOptions = {
+            method: "POST",
+            body:urlParams
+        }
+        
+        let response = await fetch(url, fetchOptions);
+        let data = await response.json()
+        
+//      console.log(data);
+        
+        if( data.result == "success" ) {
+            // 회원가입 성공일 경우
+            console.log(data.userDto)
+            alert("회원가입 되었습니다. 로그인 페이지로 이동합니다.")
+            window.location.href="/login"
+        }else if( data.result == "exist" ){
+            alert("이미 등록된 이메일입니다.")
+        }else if( data.result == "fail" ){
+            alert("회원가입 과정에서 오류가 발생했습니다.")
+        }
+        
+    }
+</script> 
+</body>
+</html>

@@ -2,6 +2,7 @@ package com.ureca.miniproject.chat.controller;
 
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
@@ -9,11 +10,13 @@ import org.springframework.stereotype.Controller;
 import com.ureca.miniproject.chat.dto.ChatMessage;
 import com.ureca.miniproject.chat.tool.ChatRoomUserTool;
 
+
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Controller
 public class ChatController {
+
 
     private final ChatRoomUserTool userRepo;
 

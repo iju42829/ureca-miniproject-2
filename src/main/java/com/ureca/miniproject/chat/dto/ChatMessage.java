@@ -16,11 +16,12 @@ public class ChatMessage {
     private String sender;            
     private String message;         
     private MessageType type;         
-
+    private Long startTime;
     private List<String> participants;
 
 
     public enum MessageType {
-        ENTER, TALK, LEAVE
+        ENTER, TALK, LEAVE, VOTE, END_TIME, START_TIME
     }
+
 }

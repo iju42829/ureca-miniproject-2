@@ -3,7 +3,6 @@ package com.ureca.miniproject.game.service;
 import com.ureca.miniproject.game.controller.request.CreateRoomRequest;
 import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.entity.GameRoom;
-import com.ureca.miniproject.game.entity.ParticipantRole;
 import com.ureca.miniproject.game.entity.ParticipantStatus;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
 import com.ureca.miniproject.game.service.response.CreateGameRoomResponse;
@@ -33,7 +32,6 @@ public class GameRoomServiceImpl implements GameRoomService {
         GameParticipant gameParticipant = GameParticipant.builder()
                 .user(user)
                 .status(ParticipantStatus.JOINED)
-                .role(ParticipantRole.CITIZEN)
                 .isAlive(true)
                 .build();
 

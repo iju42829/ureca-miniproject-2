@@ -31,6 +31,9 @@ public class GameRoom extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer maxPlayer;
 
+    @Column(nullable = false)
+    private Integer currentPlayer;
+
     @OneToMany(mappedBy = "gameRoom", cascade = CascadeType.ALL)
     private List<GameParticipant> participants = new ArrayList<>();
 
@@ -40,6 +43,7 @@ public class GameRoom extends BaseTimeEntity {
         gameRoom.title = title;
         gameRoom.roomStatus = roomStatus;
         gameRoom.maxPlayer = maxPlayer;
+        gameRoom.currentPlayer = 1;
 
         gameRoom.addGameParticipant(gameParticipant);
         return gameRoom;

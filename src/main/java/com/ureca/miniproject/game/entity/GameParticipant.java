@@ -25,7 +25,6 @@ public class GameParticipant extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private ParticipantStatus status;
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private ParticipantRole role;
 

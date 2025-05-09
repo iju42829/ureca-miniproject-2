@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<h1>Login</h1>
+    <hr>
+    
+    <div>
+        <input type="text" id="username" name="username" required value="jmk445">
+    </div>
+    <div>
+        <input type="password" id="password" name="password" required value="1234">
+    </div>
+    
+    <!-- Add hidden input for CSRF token -->
+    <input type="hidden" name="_csrf" value="" id="_csrf"> 
+    <!-- 나와 내서버에서 왔다갔다 하는 것이 아닌 다른 것이 인척 하는 것을 csrf 라고 하는데 그것을 막아주는 것이 security의 핵심 기능 -->
+    <!-- 우리는 접근하면 token을 클라이언트와 서버에 준다. 그러면 위변조하려는 애가 token을 몰라서 token을 모르면 버그를 낸다.-->
+    <!-- 이제 이거는 받았을 때 받은 것을 이것도 저장을 한 거를 이걸 통해서 같이 날라가게끔 하려고  -->
+    
+    
+    <button id="btnLogin" type="submit">Login</button>
+    
+    
+    <div id="error-message" style="color: red; margin-top: 10px;"></div> 
+<!-- 이 div 안에 뭔가 들어모면 이게 출력되는 것. -->
+
+<script>
+	window.onload=function(){
+		getCsrfToken();
+		
+		document.querySelector("#btnLogin").onclick=login;
+	}
+	async function getCsrfToken(){
+	    let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
+	    let data = await response.json();
+	    document.querySelector('#_csrf').value = data.token;
+	}
+	
+	async function login(){
+	    // parameter, value
+	    let username = document.querySelector("#username").value;
+	    let password = document.querySelector("#password").value;
+	    let _csrf = document.querySelector("#_csrf").value;
+	    
+	    let urlParams = new URLSearchParams({
+	        username, password, _csrf
+	    });
+	    
+	    // url
+	    let url = "/login";
+	    
+	    // post, parameter
+	    let fetchOptions = {
+	        method: "POST",
+	        body:urlParams
+	    }
+	    
+	    let response = await fetch(url, fetchOptions);
+	    let data = await response.json();
+	    
+	    console.log(data);
+	    
+	    if (data.result == "success") {
+	        window.location.href = '/';
+	    } else {
+	        document.getElementById('error-message').innerText = 'username 또는 password 가 올바르지 않습니다.';
+	    }
+	}
+</script>
+</body>
+</html>

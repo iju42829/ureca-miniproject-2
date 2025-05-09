@@ -19,7 +19,7 @@ public class UserController {
 	private final UserService userService;
 	
 	@PostMapping("/auth/signup")		
-	public ResponseEntity<UserResultDto> register(UserDto userDto){
+	public ResponseEntity<UserResultDto> signup(UserDto userDto){
 		UserResultDto userResultDto = this.userService.register(userDto);
 		
 		return ResponseEntity

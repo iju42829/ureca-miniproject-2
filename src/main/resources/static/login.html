@@ -9,10 +9,10 @@
     <hr>
     
     <div>
-        <input type="text" id="username" name="username" required value="jmk445">
+        <input type="text" id="email" name="email" required value="aa">
     </div>
     <div>
-        <input type="password" id="password" name="password" required value="1234">
+        <input type="password" id="password" name="password" required value="aa">
     </div>
     
     <!-- Add hidden input for CSRF token -->
@@ -42,7 +42,8 @@
 	
 	async function login(){
 	    // parameter, value
-	    let username = document.querySelector("#username").value;
+	    //spring security에서 제공하는 UserDetailsService에서 'loadByUsername'으로 받기 때문에 username으로 전송, 실제 값은 email로 custom
+	    let username = document.querySelector("#email").value;
 	    let password = document.querySelector("#password").value;
 	    let _csrf = document.querySelector("#_csrf").value;
 	    

@@ -9,7 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.ureca.miniproject.user.dto.Role;
+import com.ureca.miniproject.user.entity.Role;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.repository.UserRepository;
 
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class MyUserDetailsService implements UserDetailsService{
 	
 	private final UserRepository userRepository;
-
+	//UserDetailsService에서 제공하는 method가 loadUSerByUsername 밖에 없음 -> 실제 값은 email을 넘겨주는 방식으로 custom
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		

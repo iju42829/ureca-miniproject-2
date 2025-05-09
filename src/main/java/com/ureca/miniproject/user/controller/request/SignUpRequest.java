@@ -1,4 +1,6 @@
-package com.ureca.miniproject.user.dto;
+package com.ureca.miniproject.user.controller.request;
+
+import com.ureca.miniproject.user.entity.Role;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDto {
+public class SignUpRequest {
 	private Long Id;
 	private String userName;
 	private String password;

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+</head>
+<body>
+<h1>게임방 목록</h1>
+<div id="roomList"></div>
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: '/api/rooms',
+            type: 'GET',
+            success: function (response) {
+                const rooms = response.data.rooms;
+
+                rooms.forEach(room => {
+                    $('#roomList').append(`
+                    <div>
+                        방 제목: ${room.title}, 인원: ${room.currentPlayer}/${room.maxPlayer}, 상태: ${room.status}
+                         <button class="btn-join">게임 참여</button>
+                    </div>
+                `);
+                });
+            },
+            error: function () {
+                $('#roomList').text('게임방 목록을 불러오는데 실패했습니다.');
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.game.controller.request.CreateRoomRequest;
 import com.ureca.miniproject.game.service.GameRoomService;
 import com.ureca.miniproject.game.service.response.CreateGameRoomResponse;
-import com.ureca.miniproject.user.exception.UserNotFoundException;
+import com.ureca.miniproject.game.service.response.ListGameRoomResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,5 +28,12 @@ public class GameRoomController {
 
         return ResponseEntity.ok(ApiResponse
                 .of(GAME_ROOM_CREATE_SUCCESS, createGameRoomResponse));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<ListGameRoomResponse>> listGameRoom() {
+        ListGameRoomResponse listGameRoomResponse = gameRoomService.listGameRoom();
+
+        return ResponseEntity.ok(ApiResponse.of(GAME_ROOM_LIST_READ_SUCCESS, listGameRoomResponse));
     }
 }

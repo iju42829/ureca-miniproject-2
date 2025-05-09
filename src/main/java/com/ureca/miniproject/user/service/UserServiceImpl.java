@@ -3,6 +3,7 @@ package com.ureca.miniproject.user.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ureca.miniproject.user.controller.request.UserRequest;
 import com.ureca.miniproject.user.dto.Role;
 import com.ureca.miniproject.user.dto.UserDto;
 import com.ureca.miniproject.user.dto.UserResultDto;
@@ -16,17 +17,17 @@ public class UserServiceImpl implements UserService{
 	
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
-	public UserResultDto register(UserDto userDto) {
+	public UserResultDto register(UserRequest userRequest) {
 		UserResultDto userResultDto = new UserResultDto();		
 		
 		try {
 			User userRegisterResult = userRepository.save(
 					User.builder()
-						.userName(userDto.getUserName())
-						.password(passwordEncoder.encode(userDto.getPassword()))
-						.email(userDto.getEmail())
+						.userName(userRequest.getUserName())
+						.password(passwordEncoder.encode(userRequest.getPassword()))
+						.email(userRequest.getEmail())
 						.role(Role.ADMIN)
-						.isOnline(userDto.getIsOnline())
+						.isOnline(userRequest.getIsOnline())
 						.build()
 					);
 						

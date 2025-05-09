@@ -1,5 +1,6 @@
 package com.ureca.miniproject.game.service;
 
+import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.game.controller.request.CreateRoomRequest;
 import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.entity.GameRoom;
@@ -25,8 +26,8 @@ public class GameRoomServiceImpl implements GameRoomService {
     private final UserRepository userRepository;
 
     @Override
-    public CreateGameRoomResponse createGameRoom(CreateRoomRequest createRoomRequest, Long userId) {
-        User user = userRepository.findById(userId)
+    public CreateGameRoomResponse createGameRoom(CreateRoomRequest createRoomRequest, MyUserDetails myUserDetails) {
+        User user = userRepository.findByEmail(myUserDetails.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
         GameParticipant gameParticipant = GameParticipant.builder()

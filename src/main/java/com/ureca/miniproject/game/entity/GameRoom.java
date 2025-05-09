@@ -53,4 +53,8 @@ public class GameRoom extends BaseTimeEntity {
         gameParticipant.setGameRoom(this);
         participants.add(gameParticipant);
     }
+
+    public void addCurrentPlayer() {
+        this.currentPlayer++;
+    }
 }

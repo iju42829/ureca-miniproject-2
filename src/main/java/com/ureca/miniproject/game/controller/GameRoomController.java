@@ -6,6 +6,7 @@ import com.ureca.miniproject.game.controller.request.CreateRoomRequest;
 import com.ureca.miniproject.game.service.GameParticipantService;
 import com.ureca.miniproject.game.service.GameRoomService;
 import com.ureca.miniproject.game.service.response.CreateGameRoomResponse;
+import com.ureca.miniproject.game.service.response.ListGameParticipantResponse;
 import com.ureca.miniproject.game.service.response.ListGameRoomResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -44,5 +45,12 @@ public class GameRoomController {
         Long participant = gameParticipantService.createParticipant(roomId, myUserDetails);
 
         return ResponseEntity.ok(ApiResponse.ok(GAME_ROOM_CREATE_SUCCESS));
+    }
+
+    @GetMapping("/{roomId}")
+    public ResponseEntity<ApiResponse<ListGameParticipantResponse>> listGameParticipant(@PathVariable Long roomId) {
+        ListGameParticipantResponse listGameParticipantResponse = gameParticipantService.listGameParticipant(roomId);
+
+        return ResponseEntity.ok(ApiResponse.of(GAME_PARTICIPANT_LIST_READ_SUCCESS, listGameParticipantResponse));
     }
 }

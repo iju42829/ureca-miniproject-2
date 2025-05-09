@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+</head>
+<body>
+<h1 id="roomTitle">로딩 중...</h1>
+<p id="roomInfo"></p>
+<h3>참여자</h3>
+<ul id="participantList">
+    <!-- 여기로 아이템들이 들어갑니다 -->
+</ul>
+
+<button id="backBtn">목록으로 돌아가기</button>
+
+<script>
+    $(function() {
+        // 1) URL에서 roomId 꺼내기 (예: ?roomId=123)
+        const params = new URLSearchParams(window.location.search);
+        const roomId = params.get('roomId');
+        if (!roomId) {
+            $('#participantList').append('<li>잘못된 접근입니다.</li>');
+            return;
+        }
+
+        // 2) AJAX 요청으로 ListGameParticipantResponse 받기
+        $.ajax({
+            url: `/api/rooms/${roomId}`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                // 만약 ApiResponse<ListGameParticipantResponse> 형태라면:
+                // const list = res.data.participantResponseList;
+                // 바로 DTO만 리턴한다면:
+                const list = res.participantResponseList || res.data.participantResponseList;
+                const $ul = $('#participantList').empty();
+
+                if (!list || !list.length) {
+                    $ul.append('<li>참여자가 없습니다.</li>');
+                    return;
+                }
+
+                // 3) 각 GameParticipantResponse 렌더링
+                list.forEach(function(p) {
+                    const statusClass = p.isAlive ? 'alive' : 'dead';
+                    const statusText  = p.isAlive ? '생존' : '사망';
+
+                    $ul.append(`
+              <li class="${statusClass}">
+                [${p.id}] ${p.name} — 상태: ${p.status} (${statusText})
+              </li>
+            `);
+                });
+            },
+            error: function(xhr) {
+                $('#participantList').empty()
+                    .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -69,7 +69,7 @@
                 },
                 success() {
                     alert('게임에 참여했습니다!');
-                    window.location.href = '/game/gameDetail.html';
+                    window.location.href = '/page/gameDetail?roomId=' + roomId;
                 },
                 error(xhr) {
                     alert(xhr.responseJSON?.message || '게임 참여 실패');

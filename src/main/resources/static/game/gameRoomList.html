@@ -19,22 +19,38 @@
     $(function(){
         let csrfToken, csrfHeader;
 
-        // 1) CSRF 토큰+헤더 이름 받아오기 → 완료되면 목록 로드
-        fetch('/csrf-token', {
-            credentials: 'same-origin'
-        })
-            .then(r => r.json())
-            .then(data => {
-                csrfToken  = data.token;
-                csrfHeader = data.headerName;
-                // hidden input에도 저장
-                $('#_csrf').val(csrfToken);
-                $('#_csrf_header').val(csrfHeader);
+        // 0) 참여 중인 방이 있는지 먼저 체크
+        $.ajax({
+            url: '/api/rooms/joined',
+            type: 'GET',
+            dataType: 'json',
+            complete: function(xhr) {
+                if (xhr.status === 409) {
+                    const joined = xhr.responseJSON.data;
+                    // 참여 중인 방이 있으면 상세 페이지로 바로 이동
+                    window.location.href = '/page/gameDetail?roomId=' + joined.roomId;
+                    return;
+                }
 
-                loadRooms();
-            });
+                init();
+            }
+        });
+        function init() {
+            fetch('/csrf-token', {
+                credentials: 'same-origin'
+            })
+                .then(r => r.json())
+                .then(data => {
+                    csrfToken  = data.token;
+                    csrfHeader = data.headerName;
+                    // hidden input에도 저장
+                    $('#_csrf').val(csrfToken);
+                    $('#_csrf_header').val(csrfHeader);
 
-        // 2) 목록 조회
+                    loadRooms();
+                });
+        }
+
         function loadRooms() {
             $.ajax({
                 url: '/api/rooms',
@@ -56,7 +72,6 @@
             });
         }
 
-        // 3) 참여 클릭
         $(document).on('click', '.btn-join', function(){
             const roomId = $(this).closest('div').data('room-id');
 
@@ -64,7 +79,6 @@
                 url: `/api/rooms/${roomId}/join`,
                 type: 'POST',
                 beforeSend(xhr) {
-                    // 반드시 fetch에서 받은 headerName/token 사용
                     xhr.setRequestHeader(csrfHeader, csrfToken);
                 },
                 success() {

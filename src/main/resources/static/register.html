@@ -38,15 +38,15 @@
     
     async function register(){
         // parameter, value
-        let name = document.querySelector("#name").value;
+        let userName = document.querySelector("#name").value;
         let email = document.querySelector("#email").value;
         let password = document.querySelector("#password").value;
         let _csrf = document.querySelector("#_csrf").value;
         
-        console.log(name, email, password, _csrf);
+        console.log(userName, email, password, _csrf);
         
         let urlParams = new URLSearchParams({
-            name, email, password, _csrf
+        	userName, email, password, _csrf
         });
         
         // url
@@ -60,18 +60,16 @@
         
         let response = await fetch(url, fetchOptions);
         let data = await response.json()
-        
-//      console.log(data);
-        
-        if( data.result == "success" ) {
-            // 회원가입 성공일 경우
-            console.log(data.userDto)
-            alert("회원가입 되었습니다. 로그인 페이지로 이동합니다.")
-            window.location.href="/login"
-        }else if( data.result == "exist" ){
-            alert("이미 등록된 이메일입니다.")
-        }else if( data.result == "fail" ){
-            alert("회원가입 과정에서 오류가 발생했습니다.")
+        console.log(response.status)
+        if (response.status === 200) {
+            alert("회원가입 되었습니다. 로그인 페이지로 이동합니다.");
+            window.location.href = "/login";
+        } else if (response.status === 409) {
+            alert("이미 등록된 이메일입니다.");
+        } else if (response.status === 500) {
+            alert("회원가입 과정에서 오류가 발생했습니다.");
+        } else {
+            alert("알 수 없는 오류가 발생했습니다.");
         }
         
     }

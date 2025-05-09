@@ -1,14 +1,17 @@
 package com.ureca.miniproject.user.service;
 
+import static com.ureca.miniproject.common.BaseCode.INTERNAL_SERVER_ERROR;
+import static com.ureca.miniproject.common.BaseCode.USER_ALREADY_EXIST;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.ureca.miniproject.user.controller.request.UserRequest;
-import com.ureca.miniproject.user.dto.Role;
-import com.ureca.miniproject.user.dto.UserDto;
-import com.ureca.miniproject.user.dto.UserResultDto;
+import com.ureca.miniproject.user.controller.request.SignUpRequest;
+import com.ureca.miniproject.user.entity.Role;
 import com.ureca.miniproject.user.entity.User;
+import com.ureca.miniproject.user.exception.UserAlreadyExistException;
 import com.ureca.miniproject.user.repository.UserRepository;
+import com.ureca.miniproject.user.service.response.SignUpResponse;
 
 import lombok.RequiredArgsConstructor;
 @Service
@@ -17,37 +20,22 @@ public class UserServiceImpl implements UserService{
 	
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
-	public UserResultDto register(UserRequest userRequest) {
-		UserResultDto userResultDto = new UserResultDto();		
+	public SignUpResponse signUp(SignUpRequest signupRequest) {
+		User user = null;
+		if(userRepository.existsByEmail(signupRequest.getEmail())) {			
+			throw(new UserAlreadyExistException(USER_ALREADY_EXIST));
+		}		
+		System.out.println(signupRequest.getUserName());
+		user = userRepository.save(
+				User.builder()
+					.userName(signupRequest.getUserName())
+					.password(passwordEncoder.encode(signupRequest.getPassword()))
+					.role(Role.USER)
+					.email(signupRequest.getEmail())											
+					.build()
+				);			
 		
-		try {
-			User userRegisterResult = userRepository.save(
-					User.builder()
-						.userName(userRequest.getUserName())
-						.password(passwordEncoder.encode(userRequest.getPassword()))
-						.email(userRequest.getEmail())
-						.role(Role.ADMIN)
-						.isOnline(userRequest.getIsOnline())
-						.build()
-					);
-						
-			userResultDto
-						.setUserDto(UserDto.builder()
-						.userName(userRegisterResult.getUserName())
-						.password(userRegisterResult.getPassword())
-						.email(userRegisterResult.getEmail())
-						.role(userRegisterResult.getRole())
-						.isOnline(userRegisterResult.getIsOnline())
-						.build()
-					);	
-			
-			userResultDto.setResult("success");
-		}catch(Exception e) {						
-			userResultDto.setResult("internalServerError");
-		}
-				
-		
-		return userResultDto;
+		return new SignUpResponse(user.getUserName(),user.getEmail());
 	}
 //	UserResultDto listUsers(); // 전체 사용자 목록
 //	UserResultDto detailUser(int id); // 사용자 상세 조회

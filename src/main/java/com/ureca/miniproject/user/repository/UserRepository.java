@@ -10,4 +10,5 @@ import com.ureca.miniproject.user.entity.User;
 public interface UserRepository extends JpaRepository<User, Long>{
 	//crud 생성 완료
 	Optional<User> findByEmail(String email);
+	boolean existsByEmail(String email);
 }

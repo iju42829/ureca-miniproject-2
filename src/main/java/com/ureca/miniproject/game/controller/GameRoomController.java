@@ -8,7 +8,9 @@ import com.ureca.miniproject.game.service.GameRoomService;
 import com.ureca.miniproject.game.service.response.CreateGameRoomResponse;
 import com.ureca.miniproject.game.service.response.ListGameParticipantResponse;
 import com.ureca.miniproject.game.service.response.ListGameRoomResponse;
+import com.ureca.miniproject.game.service.response.ParticipantCheckResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -52,5 +54,20 @@ public class GameRoomController {
         ListGameParticipantResponse listGameParticipantResponse = gameParticipantService.listGameParticipant(roomId);
 
         return ResponseEntity.ok(ApiResponse.of(GAME_PARTICIPANT_LIST_READ_SUCCESS, listGameParticipantResponse));
+    }
+
+    @GetMapping("/joined")
+    public ResponseEntity<ApiResponse<?>> checkJoinGame(@AuthenticationPrincipal MyUserDetails myUserDetails) {
+        ParticipantCheckResponse participant = gameParticipantService.checkParticipant(myUserDetails);
+
+        if (participant == null) {
+            return ResponseEntity
+                    .status(HttpStatus.NO_CONTENT)
+                    .body(ApiResponse.of(GAME_PARTICIPANT_READ_JOINED_SUCCESS, null));
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.of(GAME_PARTICIPANT_ALREADY_JOINED, participant));
     }
 }

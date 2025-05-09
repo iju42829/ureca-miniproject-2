@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 public class User extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private Long Id;
+	private Long id;
 	private String userName;
 	private String password;
 	private String email;

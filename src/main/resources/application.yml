@@ -24,3 +24,6 @@ logging:
         miniproject: debug
 
     org.hibernate.SQL: debug
+    org:
+      springframework:
+        security: debug

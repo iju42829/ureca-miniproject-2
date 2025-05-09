@@ -1,7 +1,10 @@
 package com.ureca.miniproject.game.service;
 
 import com.ureca.miniproject.game.controller.request.CreateRoomRequest;
+import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.entity.GameRoom;
+import com.ureca.miniproject.game.entity.ParticipantRole;
+import com.ureca.miniproject.game.entity.ParticipantStatus;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
 import com.ureca.miniproject.game.service.response.CreateGameRoomResponse;
 import com.ureca.miniproject.user.entity.User;
@@ -27,12 +30,14 @@ public class GameRoomServiceImpl implements GameRoomService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
-        GameRoom gameRoom = GameRoom.builder()
-                .hostUser(user)
-                .title(createRoomRequest.getTitle())
-                .roomStatus(WAITING)
-                .maxPlayer(createRoomRequest.getMaxPlayer())
+        GameParticipant gameParticipant = GameParticipant.builder()
+                .user(user)
+                .status(ParticipantStatus.JOINED)
+                .role(ParticipantRole.CITIZEN)
+                .isAlive(true)
                 .build();
+
+        GameRoom gameRoom = GameRoom.createGameRoom(user, createRoomRequest.getTitle(), WAITING, createRoomRequest.getMaxPlayer(), gameParticipant);
 
         gameRoomRepository.save(gameRoom);
 

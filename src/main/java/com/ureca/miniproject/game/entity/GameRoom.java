@@ -3,12 +3,13 @@ package com.ureca.miniproject.game.entity;
 import com.ureca.miniproject.common.BaseTimeEntity;
 import com.ureca.miniproject.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
+@Setter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GameRoom extends BaseTimeEntity {
@@ -30,11 +31,22 @@ public class GameRoom extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer maxPlayer;
 
-    @Builder
-    private GameRoom(User hostUser, String title, RoomStatus roomStatus, Integer maxPlayer) {
-        this.hostUser = hostUser;
-        this.title = title;
-        this.roomStatus = roomStatus;
-        this.maxPlayer = maxPlayer;
+    @OneToMany(mappedBy = "gameRoom", cascade = CascadeType.ALL)
+    private List<GameParticipant> participants = new ArrayList<>();
+
+    public static GameRoom createGameRoom(User hostUser, String title, RoomStatus roomStatus, Integer maxPlayer, GameParticipant gameParticipant) {
+        GameRoom gameRoom = new GameRoom();
+        gameRoom.hostUser = hostUser;
+        gameRoom.title = title;
+        gameRoom.roomStatus = roomStatus;
+        gameRoom.maxPlayer = maxPlayer;
+
+        gameRoom.addGameParticipant(gameParticipant);
+        return gameRoom;
+    }
+
+    public void addGameParticipant(GameParticipant gameParticipant) {
+        gameParticipant.setGameRoom(this);
+        participants.add(gameParticipant);
     }
 }

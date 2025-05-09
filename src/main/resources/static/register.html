@@ -38,15 +38,15 @@
     
     async function register(){
         // parameter, value
-        let name = document.querySelector("#name").value;
+        let userName = document.querySelector("#name").value;
         let email = document.querySelector("#email").value;
         let password = document.querySelector("#password").value;
         let _csrf = document.querySelector("#_csrf").value;
         
-        console.log(name, email, password, _csrf);
+        console.log(userName, email, password, _csrf);
         
         let urlParams = new URLSearchParams({
-            name, email, password, _csrf
+        	userName, email, password, _csrf
         });
         
         // url

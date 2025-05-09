@@ -20,18 +20,18 @@ public class UserServiceImpl implements UserService{
 	
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
-	public SignUpResponse signUp(SignUpRequest userRequest) {
+	public SignUpResponse signUp(SignUpRequest signupRequest) {
 		User user = null;
-		if(userRepository.existsByEmail(userRequest.getEmail())) {			
+		if(userRepository.existsByEmail(signupRequest.getEmail())) {			
 			throw(new UserAlreadyExistException(USER_ALREADY_EXIST));
 		}		
-		
+		System.out.println(signupRequest.getUserName());
 		user = userRepository.save(
 				User.builder()
-					.userName(userRequest.getUserName())
-					.password(passwordEncoder.encode(userRequest.getPassword()))
+					.userName(signupRequest.getUserName())
+					.password(passwordEncoder.encode(signupRequest.getPassword()))
 					.role(Role.USER)
-					.email(userRequest.getEmail())											
+					.email(signupRequest.getEmail())											
 					.build()
 				);			
 		

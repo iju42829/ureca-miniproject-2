@@ -18,18 +18,35 @@
         <li>시민 수가 마피아 수보다 같거나 적어지면 마피아 승리</li>
     </ul>
 </div>
+
+<div id="vote-modal" class="modal">
+  <div class="modal-content">
+    <h3>투표할 플레이어를 선택하세요</h3>
+    <ul id="vote-list"></ul>
+    <button onclick="submitVote()" class="vote-button">투표하기</button>
+  </div>
+</div>
+
+
+
 <div class="sidebar">
     <button onclick="toggleRulebook(true)">룰북 보기</button>
     <div id="timer">남은 시간: <span id="time">120</span>초</div>
-    <button onclick="endTimerNow()">시간 조기 종료</button>
-    
+    <button id="end-timer-btn" onclick="endTimerNow()">시간 조기 종료</button>
+	<button onclick="startDebate()">토론 시작</button>
+
+    <h4>참여자 목록</h4>
+    <ul id="participant-list" class="participant-list"></ul>
 </div>
+
+
 <div class="main">
     <header>채팅방</header>
     <div id="chat-box"></div>
     <footer>
         <textarea id="message" placeholder="메시지를 입력하세요" rows="1" style="resize: none; width: 100%;"></textarea>
-        
+
+
         <button onclick="sendMessage()">전송</button>
     </footer>
 </div>
@@ -37,30 +54,67 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script>
-	
-	const roomId = "room123";
-    
-    
-    sessionStorage.setItem("username", "ss");
-    
-    
-    const sender = sessionStorage.getItem("username");
-	const socket = new SockJS("/ws/chat");
-	const stompClient = Stomp.over(socket);
+    const roomId = "room123";
+    const sender = sessionStorage.getItem("username") || "익명";
+    sessionStorage.setItem("username", sender);
+
+    const socket = new SockJS("/ws/chat");
+    const stompClient = Stomp.over(socket);
+
+    let latestParticipants = [];
+    let debateTimer = null;
+    let debateEndTime = null;
+    const timeSpan = document.getElementById("time");
+
     stompClient.connect({}, () => {
         stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
             const data = JSON.parse(msg.body);
-            const sender = sessionStorage.getItem("username");
             const isMe = sender === data.sender;
-            displayMessage(data.sender, data.message, isMe);
-        });
-    });
-    function sendMessage() {
-    	if (timeLeft <= 0) return;
-        const sender = sessionStorage.getItem("username"); 
-        const message = document.getElementById("message").value;
-        if (message.length === 0) return;
 
+            console.log("수신 메시지:", data);
+
+            if (data.type === "TALK") {
+                displayMessage(data.sender, data.message, isMe);
+            } else if (data.type === "ENTER" || data.type === "LEAVE") {
+                displayNotice(data.message);
+            } else if (data.type === "END_TIME") {
+                displayNotice(data.message);
+                clearInterval(debateTimer);
+                timeSpan.textContent = 0;
+                document.getElementById("end-timer-btn").disabled = true; 
+                showVoteModal(latestParticipants);
+            } else if (data.type === "START_TIME") {
+                displayNotice(data.message);
+                handleStartTime(data.startTime);
+
+            }
+
+            if (data.participants) {
+                updateParticipantList(data.participants);
+            }
+        });
+
+      
+        stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: "",
+            type: "ENTER"
+        }));
+    });
+
+    window.addEventListener("beforeunload", () => {
+        stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: "",
+            type: "LEAVE"
+        }));
+    });
+
+    function sendMessage() {
+        const message = document.getElementById("message").value;
+        if (!message.trim()) return;
 
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
             roomId: roomId,
@@ -68,7 +122,6 @@
             message: message,
             type: "TALK"
         }));
-        
         document.getElementById("message").value = '';
     }
 
@@ -81,9 +134,16 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>&ZeroWidthSpace;')}</div>`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-
-
+    function displayNotice(message) {
+        if (!message || message.trim() === "") return;
+        const chatBox = document.getElementById("chat-box");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "notice";
+        msgDiv.innerHTML = `<div class="message-notice">${message}</div>`;
         chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -91,42 +151,95 @@
     function toggleRulebook(show) {
         const modal = document.getElementById("rulebook-modal");
         const overlay = document.getElementById("rulebook-overlay");
-        if (show) {
-            modal.style.display = 'block';
-            overlay.style.display = 'block';
-        } else {
-            modal.style.display = 'none';
-            overlay.style.display = 'none';
-        }
+        modal.style.display = show ? 'block' : 'none';
+        overlay.style.display = show ? 'block' : 'none';
     }
 
-    let timeLeft = 120;
-    const timeSpan = document.getElementById("time");
-    const timer = setInterval(() => {
-        if (timeLeft > 0) {
-            timeLeft--;
-            timeSpan.textContent = timeLeft;
-        } else {
-            clearInterval(timer);
-            alert("시간이 종료되었습니다!");
+    function updateParticipantList(participants) {
+        latestParticipants = participants;
+        const list = document.getElementById("participant-list");
+        list.innerHTML = '';
+        participants.forEach(p => {
+            const item = document.createElement("li");
+            item.textContent = p;
+            list.appendChild(item);
+        });
+    }
+
+    function showVoteModal(participants) {
+        const voteList = document.getElementById("vote-list");
+        voteList.innerHTML = '';
+        participants.forEach(name => {
+            if (name === sender) return;
+            const li = document.createElement("li");
+            li.textContent = name;
+            li.onclick = () => {
+                document.querySelectorAll("#vote-list li").forEach(el => el.classList.remove("selected"));
+                li.classList.add("selected");
+            };
+            voteList.appendChild(li);
+        });
+        document.getElementById("vote-modal").style.display = "flex";
+    }
+
+    function submitVote() {
+        const selected = document.querySelector("#vote-list li.selected");
+        if (!selected) {
+            alert("투표 대상을 선택하세요.");
+            return;
         }
-    }, 1000);
+
+        const votedUser = selected.textContent;
+        stompClient.send("/app/chat.vote/" + roomId, {}, JSON.stringify({
+            sender: sender,
+            voted: votedUser,
+            type: "VOTE"
+        }));
+
+        document.getElementById("vote-modal").style.display = "none";
+    }
+
     function endTimerNow() {
-        timeLeft = 0;
-        timeSpan.textContent = 0;
-        clearInterval(timer);
-        alert("시간이 종료되었습니다!");
+        stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: "시간 종료",
+            type: "END_TIME"
+        }));
     }
-    document.getElementById("message").addEventListener("keydown", function(event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault(); 
-            const message = this.value;
-            if (message !== "") {
-                sendMessage();
-            }
-        }
-    });
 
+    function startDebate() {
+        document.getElementById("end-timer-btn").disabled = false;
+
+        stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: "",
+            type: "START_TIME"
+        }));
+    }
+
+
+    function handleStartTime(startTimeMillis) {
+        const duration = 120 * 1000; 
+        
+        debateEndTime = startTimeMillis + duration;
+
+        if (debateTimer) clearInterval(debateTimer);
+		
+        debateTimer = setInterval(() => {
+            const now = Date.now();
+            const remaining = Math.max(0, Math.floor((debateEndTime - now) / 1000));
+            timeSpan.textContent = remaining;
+            if (remaining <= 0) {
+                clearInterval(debateTimer);
+                document.getElementById("end-timer-btn").disabled = true;
+                showVoteModal(latestParticipants);
+            }
+            
+        }, 500);
+    }
 </script>
 </body>
 </html>
+

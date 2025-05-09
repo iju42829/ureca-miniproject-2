@@ -21,6 +21,7 @@ public class SecurityConfig {
 					 authz -> {
 					 authz.requestMatchers(
 					    "/",
+					    "/chat/**",
 						"/index.html",
 					    "/ws/**",
 					    "/topic/**",

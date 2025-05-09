@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+</head>
+<body>
+<h1>게임방 목록</h1>
+
+<!-- CSRF 토큰 & 헤더 이름 보관용 -->
+<input type="hidden" id="_csrf" value="">
+<input type="hidden" id="_csrf_header" value="">
+
+<div id="roomList"></div>
+
+<script>
+    $(function(){
+        let csrfToken, csrfHeader;
+
+        // 1) CSRF 토큰+헤더 이름 받아오기 → 완료되면 목록 로드
+        fetch('/csrf-token', {
+            credentials: 'same-origin'
+        })
+            .then(r => r.json())
+            .then(data => {
+                csrfToken  = data.token;
+                csrfHeader = data.headerName;
+                // hidden input에도 저장
+                $('#_csrf').val(csrfToken);
+                $('#_csrf_header').val(csrfHeader);
+
+                loadRooms();
+            });
+
+        // 2) 목록 조회
+        function loadRooms() {
+            $.ajax({
+                url: '/api/rooms',
+                type: 'GET',
+                success(response) {
+                    $('#roomList').empty();
+                    response.data.rooms.forEach(room => {
+                        $('#roomList').append(`
+              <div data-room-id="${room.roomId}">
+                방 제목: ${room.title}, 인원: ${room.currentPlayer}/${room.maxPlayer}, 상태: ${room.status}
+                <button class="btn-join">게임 참여</button>
+              </div>
+            `);
+                    });
+                },
+                error() {
+                    $('#roomList').text('게임방 목록 불러오기 실패');
+                }
+            });
+        }
+
+        // 3) 참여 클릭
+        $(document).on('click', '.btn-join', function(){
+            const roomId = $(this).closest('div').data('room-id');
+
+            $.ajax({
+                url: `/api/rooms/${roomId}/join`,
+                type: 'POST',
+                beforeSend(xhr) {
+                    // 반드시 fetch에서 받은 headerName/token 사용
+                    xhr.setRequestHeader(csrfHeader, csrfToken);
+                },
+                success() {
+                    alert('게임에 참여했습니다!');
+                    window.location.href = '/game/gameDetail.html';
+                },
+                error(xhr) {
+                    alert(xhr.responseJSON?.message || '게임 참여 실패');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

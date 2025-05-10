@@ -18,7 +18,10 @@ public enum BaseCode {
     GAME_ROOM_CREATE_SUCCESS("CREATE_GAME_ROOM_201", HttpStatus.CREATED, "게임방이 성공적으로 생성되었습니다."),
     GAME_ROOM_LIST_READ_SUCCESS("READ_GAME_ROOM_LIST_200", HttpStatus.OK, "게임방 목록 조회에 성공했습니다."),
     GAME_ROOM_NOT_FOUND("NOT_FOUND_GAME_ROOM_404", HttpStatus.NOT_FOUND, "게임방을 찾을 수 없습니다."),
-
+    GAME_ROOM_LEAVE_SUCCESS("LEAVE_GAME_ROOM_200", HttpStatus.OK, "게임방에서 나가기에 성공했습니다."),
+    GAME_ROOM_NOT_WAITING("GAME_ROOM_NOT_WAITING_400", HttpStatus.BAD_REQUEST, "게임방이 대기 상태가 아닙니다."),
+    GAME_ROOM_DELETE_NOT_ALLOWED("DELETE_GAME_ROOM_FORBIDDEN_403", HttpStatus.FORBIDDEN, "게임방 삭제 권한이 없습니다."),
+    GAME_ROOM_DELETE_SUCCESS("DELETE_GAME_ROOM_200", HttpStatus.OK, "게임방이 성공적으로 삭제되었습니다."),
 
     // GAME_PARTICIPANT
     GAME_PARTICIPANT_ALREADY_JOINED("ALREADY_JOINED_GAME_PARTICIPANT_409", HttpStatus.CONFLICT, "이미 참여 중인 게임방이 있습니다."),

@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>게임 방 상세</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-
     <style>
         .btn { padding: 8px 12px; margin: 4px; cursor: pointer; }
         .btn-leave { background: #f66; color: #fff; }
@@ -17,78 +16,101 @@
 <p id="roomInfo"></p>
 
 <h3>참여자</h3>
-<ul id="participantList">
-</ul>
+<ul id="participantList"></ul>
 
 <div id="actionBtn"></div>
 
+<!-- CSRF 토큰 보관용 히든 필드 -->
+<input type="hidden" id="_csrf" value="">
+<input type="hidden" id="_csrf_header" value="">
+
 <script>
     $(function() {
-        const params = new URLSearchParams(window.location.search);
-        const roomId = params.get('roomId');
-        if (!roomId) {
-            $('#participantList').append('<li>잘못된 접근입니다.</li>');
-            return;
+        let csrfToken, csrfHeader;
+
+        fetch('/csrf-token', { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                csrfToken  = data.token;
+                csrfHeader = data.headerName;
+                $('#_csrf').val(csrfToken);
+                $('#_csrf_header').val(csrfHeader);
+
+                loadRoomDetail();
+            });
+
+        function loadRoomDetail() {
+            const params = new URLSearchParams(window.location.search);
+            const roomId = params.get('roomId');
+            if (!roomId) {
+                $('#participantList').append('<li>잘못된 접근입니다.</li>');
+                return;
+            }
+
+            $.ajax({
+                url: `/api/rooms/${roomId}`,
+                type: 'GET',
+                dataType: 'json'
+            })
+                .done(function(res) {
+                    const d = res.data;
+                    $('#roomTitle').text(d.title);
+                    $('#roomInfo').text(`인원: ${d.currentPlayer}/${d.maxPlayer}`);
+
+                    const $ul = $('#participantList').empty();
+                    if (!d.participantResponseList?.length) {
+                        $ul.append('<li>참여자가 없습니다.</li>');
+                    } else {
+                        d.participantResponseList.forEach(p => {
+                            $ul.append(`
+                <li>
+                  [${p.id}] ${p.name} — 상태: ${p.status}
+                </li>
+              `);
+                        });
+                    }
+
+                    const $action = $('#actionBtn').empty();
+                    if (d.isHost) {
+                        $action.append('<button id="deleteBtn" class="btn btn-delete">방 삭제</button>');
+                        $('#deleteBtn').on('click', () => deleteRoom(roomId));
+                    } else {
+                        $action.append('<button id="leaveBtn" class="btn btn-leave">나가기</button>');
+                        $('#leaveBtn').on('click', () => leaveRoom(roomId));
+                    }
+                })
+                .fail(xhr => {
+                    $('#participantList').empty()
+                        .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
+                });
         }
 
-        $.ajax({
-            url: `/api/rooms/${roomId}`,
-            type: 'GET',
-            dataType: 'json'
-        })
-            .done(function(res) {
-                const d = res.data;
-                $('#roomTitle').text(d.title);
-                $('#roomInfo').text(`인원: ${d.currentPlayer}/${d.maxPlayer}`);
-
-                const $ul = $('#participantList').empty();
-                if (!d.participantResponseList || !d.participantResponseList.length) {
-                    $ul.append('<li>참여자가 없습니다.</li>');
-                } else {
-                    d.participantResponseList.forEach(function(p) {
-                        $ul.append(`
-              <li>
-                [${p.id}] ${p.name} — 상태: ${p.status}
-              </li>
-            `);
-                    });
-                }
-
-                const $action = $('#actionBtn').empty();
-                if (d.isHost) {
-                    $action.append(`<button id="deleteBtn" class="btn btn-delete">방 삭제</button>`);
-                } else {
-                    $action.append(`<button id="leaveBtn" class="btn btn-leave">나가기</button>`);
-                }
-
-                if (d.isHost) {
-                    $('#deleteBtn').click(function() {
-                        if (!confirm('정말 방을 삭제하시겠습니까?')) return;
-                        $.ajax({
-                            url: `/api/rooms/${roomId}`,
-                            type: 'DELETE'
-                        })
-                            .done(() => {
-                                alert('방이 삭제되었습니다.');
-                                window.location.href = '/game/list.html';
-                            })
-                            .fail(xhr => alert(`삭제 실패: ${xhr.status}`));
-                    });
-                } else {
-                    $('#leaveBtn').click(function() {
-                        $.post(`/api/rooms/${roomId}/leave`)
-                            .done(() => {
-                                alert('방을 나갔습니다.');
-                                window.location.href = '/game/list.html';
-                            })
-                            .fail(xhr => alert(`나가기 실패: ${xhr.status}`));
-                    });
-                }
+        function deleteRoom(roomId) {
+            if (!confirm('정말 방을 삭제하시겠습니까?')) return;
+            $.ajax({
+                url: `/api/rooms/${roomId}`,
+                type: 'DELETE',
+                beforeSend: xhr => xhr.setRequestHeader(csrfHeader, csrfToken)
             })
-            .fail(function(xhr) {
-                $('#participantList').empty()
-                    .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
-            });
+                .done(() => {
+                    alert('방이 삭제되었습니다.');
+                    window.location.href = '/game/gameRoomList.html';
+                })
+                .fail(xhr => alert(`삭제 실패: ${xhr.status}`));
+        }
+
+        function leaveRoom(roomId) {
+            $.ajax({
+                url: `/api/rooms/${roomId}/leave`,
+                type: 'DELETE',
+                beforeSend: xhr => xhr.setRequestHeader(csrfHeader, csrfToken)
+            })
+                .done(() => {
+                    alert('방을 나갔습니다.');
+                    window.location.href = '/game/gameRoomList.html';
+                })
+                .fail(xhr => alert(`나가기 실패: ${xhr.status}`));
+        }
     });
 </script>
 </body>

@@ -57,4 +57,8 @@ public class GameRoom extends BaseTimeEntity {
     public void addCurrentPlayer() {
         this.currentPlayer++;
     }
+
+    public void removeCurrentPlayer() {
+        this.currentPlayer--;
+    }
 }

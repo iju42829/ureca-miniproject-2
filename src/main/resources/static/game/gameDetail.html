@@ -5,20 +5,25 @@
     <title>Title</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <style>
+        .btn { padding: 8px 12px; margin: 4px; cursor: pointer; }
+        .btn-leave { background: #f66; color: #fff; }
+        .btn-delete { background: #c00; color: #fff; }
+    </style>
 </head>
 <body>
 <h1 id="roomTitle">로딩 중...</h1>
 <p id="roomInfo"></p>
+
 <h3>참여자</h3>
 <ul id="participantList">
-    <!-- 여기로 아이템들이 들어갑니다 -->
 </ul>
 
-<button id="backBtn">목록으로 돌아가기</button>
+<div id="actionBtn"></div>
 
 <script>
     $(function() {
-        // 1) URL에서 roomId 꺼내기 (예: ?roomId=123)
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('roomId');
         if (!roomId) {
@@ -26,40 +31,64 @@
             return;
         }
 
-        // 2) AJAX 요청으로 ListGameParticipantResponse 받기
         $.ajax({
             url: `/api/rooms/${roomId}`,
             type: 'GET',
-            dataType: 'json',
-            success: function(res) {
-                // 만약 ApiResponse<ListGameParticipantResponse> 형태라면:
-                // const list = res.data.participantResponseList;
-                // 바로 DTO만 리턴한다면:
-                const list = res.participantResponseList || res.data.participantResponseList;
+            dataType: 'json'
+        })
+            .done(function(res) {
+                const d = res.data;
+                $('#roomTitle').text(d.title);
+                $('#roomInfo').text(`인원: ${d.currentPlayer}/${d.maxPlayer}`);
+
                 const $ul = $('#participantList').empty();
-
-                if (!list || !list.length) {
+                if (!d.participantResponseList || !d.participantResponseList.length) {
                     $ul.append('<li>참여자가 없습니다.</li>');
-                    return;
-                }
-
-                // 3) 각 GameParticipantResponse 렌더링
-                list.forEach(function(p) {
-                    const statusClass = p.isAlive ? 'alive' : 'dead';
-                    const statusText  = p.isAlive ? '생존' : '사망';
-
-                    $ul.append(`
-              <li class="${statusClass}">
-                [${p.id}] ${p.name} — 상태: ${p.status} (${statusText})
+                } else {
+                    d.participantResponseList.forEach(function(p) {
+                        $ul.append(`
+              <li>
+                [${p.id}] ${p.name} — 상태: ${p.status}
               </li>
             `);
-                });
-            },
-            error: function(xhr) {
+                    });
+                }
+
+                const $action = $('#actionBtn').empty();
+                if (d.isHost) {
+                    $action.append(`<button id="deleteBtn" class="btn btn-delete">방 삭제</button>`);
+                } else {
+                    $action.append(`<button id="leaveBtn" class="btn btn-leave">나가기</button>`);
+                }
+
+                if (d.isHost) {
+                    $('#deleteBtn').click(function() {
+                        if (!confirm('정말 방을 삭제하시겠습니까?')) return;
+                        $.ajax({
+                            url: `/api/rooms/${roomId}`,
+                            type: 'DELETE'
+                        })
+                            .done(() => {
+                                alert('방이 삭제되었습니다.');
+                                window.location.href = '/game/list.html';
+                            })
+                            .fail(xhr => alert(`삭제 실패: ${xhr.status}`));
+                    });
+                } else {
+                    $('#leaveBtn').click(function() {
+                        $.post(`/api/rooms/${roomId}/leave`)
+                            .done(() => {
+                                alert('방을 나갔습니다.');
+                                window.location.href = '/game/list.html';
+                            })
+                            .fail(xhr => alert(`나가기 실패: ${xhr.status}`));
+                    });
+                }
+            })
+            .fail(function(xhr) {
                 $('#participantList').empty()
                     .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
-            }
-        });
+            });
     });
 </script>
 </body>

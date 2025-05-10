@@ -6,7 +6,7 @@ import com.ureca.miniproject.game.controller.request.CreateRoomRequest;
 import com.ureca.miniproject.game.service.GameParticipantService;
 import com.ureca.miniproject.game.service.GameRoomService;
 import com.ureca.miniproject.game.service.response.CreateGameRoomResponse;
-import com.ureca.miniproject.game.service.response.ListGameParticipantResponse;
+import com.ureca.miniproject.game.service.response.GameRoomDetailResponse;
 import com.ureca.miniproject.game.service.response.ListGameRoomResponse;
 import com.ureca.miniproject.game.service.response.ParticipantCheckResponse;
 import lombok.RequiredArgsConstructor;
@@ -50,10 +50,10 @@ public class GameRoomController {
     }
 
     @GetMapping("/{roomId}")
-    public ResponseEntity<ApiResponse<ListGameParticipantResponse>> listGameParticipant(@PathVariable Long roomId) {
-        ListGameParticipantResponse listGameParticipantResponse = gameParticipantService.listGameParticipant(roomId);
+    public ResponseEntity<ApiResponse<GameRoomDetailResponse>> GameRoomDetailInfo(@PathVariable Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
+        GameRoomDetailResponse gameRoomDetail = gameParticipantService.getGameRoomDetail(roomId, myUserDetails);
 
-        return ResponseEntity.ok(ApiResponse.of(GAME_PARTICIPANT_LIST_READ_SUCCESS, listGameParticipantResponse));
+        return ResponseEntity.ok(ApiResponse.of(GAME_PARTICIPANT_LIST_READ_SUCCESS, gameRoomDetail));
     }
 
     @GetMapping("/joined")

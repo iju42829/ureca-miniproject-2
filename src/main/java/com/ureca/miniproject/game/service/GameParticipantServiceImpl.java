@@ -8,7 +8,8 @@ import com.ureca.miniproject.game.mapper.GameParticipantMapper;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
 import com.ureca.miniproject.game.service.response.GameParticipantResponse;
-import com.ureca.miniproject.game.service.response.ListGameParticipantResponse;
+import com.ureca.miniproject.game.service.response.GameRoomDetailResponse;
+import com.ureca.miniproject.game.service.response.GameRoomResponse;
 import com.ureca.miniproject.game.service.response.ParticipantCheckResponse;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.exception.UserNotFoundException;
@@ -57,16 +58,22 @@ public class GameParticipantServiceImpl implements GameParticipantService {
     }
 
     @Override
-    public ListGameParticipantResponse listGameParticipant(Long roomId) {
+    public GameRoomDetailResponse getGameRoomDetail(Long roomId, MyUserDetails myUserDetails) {
         List<GameParticipantResponse> gameParticipantResponseList = gameParticipantRepository.findAllByGameRoom_Id(roomId).stream()
                 .map(gameParticipantMapper::toGameParticipantResponse)
                 .toList();
 
-        ListGameParticipantResponse listGameParticipantResponse = new ListGameParticipantResponse();
+        GameRoom gameRoom = gameRoomRepository.findById(roomId).orElseThrow(() -> new GameRoomNotFoundException(GAME_ROOM_NOT_FOUND));
 
-        listGameParticipantResponse.setParticipantResponseList(gameParticipantResponseList);
+        User user = userRepository.findByEmail(myUserDetails.getEmail()).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
-        return listGameParticipantResponse;
+        return GameRoomDetailResponse.builder()
+                .title(gameRoom.getTitle())
+                .maxPlayer(gameRoom.getMaxPlayer())
+                .currentPlayer(gameRoom.getCurrentPlayer())
+                .isHost(gameRoom.getHostUser() == user)
+                .participantResponseList(gameParticipantResponseList)
+                .build();
     }
 
     @Override

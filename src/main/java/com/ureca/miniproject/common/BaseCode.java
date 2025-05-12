@@ -23,6 +23,7 @@ public enum BaseCode {
     GAME_ROOM_DELETE_NOT_ALLOWED("DELETE_GAME_ROOM_FORBIDDEN_403", HttpStatus.FORBIDDEN, "게임방 삭제 권한이 없습니다."),
     GAME_ROOM_DELETE_SUCCESS("DELETE_GAME_ROOM_200", HttpStatus.OK, "게임방이 성공적으로 삭제되었습니다."),
     GAME_ROOM_CAPACITY_EXCEEDED("GAME_ROOM_CAPACITY_EXCEEDED_400", HttpStatus.BAD_REQUEST, "게임방 참여 인원이 최대치를 초과했습니다."),
+    GAME_ROOM_START_SUCCESS("START_GAME_ROOM_200", HttpStatus.OK, "게임이 성공적으로 시작되었습니다."),
 
     // GAME_PARTICIPANT
     GAME_PARTICIPANT_ALREADY_JOINED("ALREADY_JOINED_GAME_PARTICIPANT_409", HttpStatus.CONFLICT, "이미 참여 중인 게임방이 있습니다."),

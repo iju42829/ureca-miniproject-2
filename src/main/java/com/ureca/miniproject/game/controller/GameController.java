@@ -1,10 +1,13 @@
 package com.ureca.miniproject.game.controller;
 
 import com.ureca.miniproject.common.ApiResponse;
+import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.game.controller.request.EndGameRequest;
 import com.ureca.miniproject.game.service.GameService;
+import com.ureca.miniproject.game.service.response.ListGameResultResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import static com.ureca.miniproject.common.BaseCode.*;
@@ -40,5 +43,14 @@ public class GameController {
         return ResponseEntity
                 .status(GAME_RESULT_CREATE_SUCCESS.getStatus())
                 .body(ApiResponse.ok(GAME_RESULT_CREATE_SUCCESS));
+    }
+
+    @GetMapping("/results")
+    public ResponseEntity<ApiResponse<?>> getGameResult(@AuthenticationPrincipal MyUserDetails myUserDetails) {
+        ListGameResultResponse listGameResultResponse = gameService.listGameResult(myUserDetails);
+
+        return ResponseEntity
+                .status(GAME_RESULT_LIST_READ_SUCCESS.getStatus())
+                .body(ApiResponse.of(GAME_RESULT_LIST_READ_SUCCESS, listGameResultResponse));
     }
 }

@@ -1,5 +1,6 @@
 package com.ureca.miniproject.game.entity;
 
+import com.ureca.miniproject.common.BaseTimeEntity;
 import com.ureca.miniproject.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class GameResult {
+public class GameResult extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

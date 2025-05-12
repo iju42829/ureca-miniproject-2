@@ -40,14 +40,14 @@ public class GameRoomController {
     }
 
     @GetMapping("/{roomId}")
-    public ResponseEntity<ApiResponse<GameRoomDetailResponse>> GameRoomDetailInfo(@PathVariable Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
+    public ResponseEntity<ApiResponse<GameRoomDetailResponse>> GameRoomDetailInfo(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
         GameRoomDetailResponse gameRoomDetail = gameRoomService.getGameRoomDetail(roomId, myUserDetails);
 
         return ResponseEntity.ok(ApiResponse.of(GAME_PARTICIPANT_LIST_READ_SUCCESS, gameRoomDetail));
     }
 
     @DeleteMapping("/{roomId}/leave")
-    public ResponseEntity<ApiResponse<?>> leaveGameRoom(@PathVariable Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
+    public ResponseEntity<ApiResponse<?>> leaveGameRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
         gameRoomService.leaveGameRoom(roomId, myUserDetails);
 
         return ResponseEntity
@@ -56,7 +56,7 @@ public class GameRoomController {
     }
 
     @DeleteMapping("/{roomId}")
-    public ResponseEntity<ApiResponse<?>> removeGameRoom(@PathVariable Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
+    public ResponseEntity<ApiResponse<?>> removeGameRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
         gameRoomService.removeGameRoom(roomId, myUserDetails);
 
         return ResponseEntity.status(HttpStatus.OK)

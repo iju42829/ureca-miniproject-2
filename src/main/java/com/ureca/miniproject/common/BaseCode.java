@@ -33,7 +33,9 @@ public enum BaseCode {
     GAME_PARTICIPANT_ALREADY_JOINED("ALREADY_JOINED_GAME_PARTICIPANT_409", HttpStatus.CONFLICT, "이미 참여 중인 게임방이 있습니다."),
     GAME_PARTICIPANT_CREATE_SUCCESS("CREATE_GAME_PARTICIPANT_201", HttpStatus.CREATED, "게임 참여에 성공했습니다."),
     GAME_PARTICIPANT_LIST_READ_SUCCESS("READ_LIST_GAME_PARTICIPANT_200", HttpStatus.OK, "게임 참여자 목록 조회에 성공했습니다."),
-    GAME_PARTICIPANT_READ_JOINED_SUCCESS("READ_JOINED_GAME_PARTICIPANT_204", HttpStatus.NO_CONTENT, "현재 참여 중인 게임방 조회에 성공했습니다.");
+    GAME_PARTICIPANT_READ_JOINED_SUCCESS("READ_JOINED_GAME_PARTICIPANT_204", HttpStatus.NO_CONTENT, "현재 참여 중인 게임방 조회에 성공했습니다."),
+    GAME_PARTICIPANT_NOT_FOUND("NOT_FOUND_GAME_PARTICIPANT_404", HttpStatus.NOT_FOUND, "게임 참가자를 찾을 수 없습니다."),
+    GAME_PARTICIPANT_DEATH_SUCCESS("PROCESS_GAME_PARTICIPANT_DEATH_200", HttpStatus.OK, "게임 참가자 죽음 처리가 성공했습니다.");
 
     private final String code;
     private final HttpStatus status;

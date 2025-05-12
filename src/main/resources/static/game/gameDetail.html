@@ -37,6 +37,9 @@
                 $('#_csrf').val(csrfToken);
                 $('#_csrf_header').val(csrfHeader);
 
+                // 2초마다 방 정보 갱신
+                setInterval(loadRoomDetail, 2000);
+                // 즉시 한 번 로드
                 loadRoomDetail();
             });
 
@@ -55,6 +58,12 @@
             })
                 .done(function(res) {
                     const d = res.data;
+
+                    if (d.gameRoomStatus === 'PLAYING') {
+                    	sessionStorage.setItem("roomId", roomId);
+                        return window.location.href = '/chat/chat.html';
+                    }
+
                     $('#roomTitle').text(d.title);
                     $('#roomInfo').text(`인원: ${d.currentPlayer}/${d.maxPlayer}`);
 
@@ -115,6 +124,9 @@
 
         function startGame(roomId) {
             if (!confirm('게임을 시작하시겠습니까?')) return;
+            
+            sessionStorage.setItem("roomId", roomId);
+            
             $.ajax({
                 url: `/api/games/${roomId}/start`,
                 type: 'POST',
@@ -123,7 +135,7 @@
                 .done(() => {
                     alert('게임이 시작되었습니다.');
                     // 예: 실제 플레이 페이지로 이동
-                    window.location.href = `/game/play.html?roomId=${roomId}`;
+                    window.location.href = '/chat/chat.html';
                 })
                 .fail(xhr => alert(`게임 시작 실패: ${xhr.status}`));
         }

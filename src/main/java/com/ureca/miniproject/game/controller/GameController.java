@@ -19,7 +19,7 @@ public class GameController {
     private final GameService gameService;
 
     @PostMapping("/{roomId}/start")
-    public ResponseEntity<ApiResponse<?>> startGame(@PathVariable Long roomId) {
+    public ResponseEntity<ApiResponse<?>> startGame(@PathVariable("roomId") Long roomId) {
         gameService.startGame(roomId);
 
         return ResponseEntity

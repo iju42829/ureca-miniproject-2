@@ -60,6 +60,7 @@
                     const d = res.data;
 
                     if (d.gameRoomStatus === 'PLAYING') {
+                    	sessionStorage.setItem("roomId", roomId);
                         return window.location.href = '/chat/chat.html';
                     }
 
@@ -123,6 +124,9 @@
 
         function startGame(roomId) {
             if (!confirm('게임을 시작하시겠습니까?')) return;
+            
+            sessionStorage.setItem("roomId", roomId);
+            
             $.ajax({
                 url: `/api/games/${roomId}/start`,
                 type: 'POST',

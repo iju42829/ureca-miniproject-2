@@ -14,6 +14,8 @@ public enum BaseCode {
     USER_ALREADY_EXIST("ALREADY_EXIST_USER_409", HttpStatus.CONFLICT, "동일한 이메일로 회원가입된 유저가 존재합니다."),
     USER_NOT_FOUND("NOT_FOUND_USER_404", HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
     //FRIEND
+    FRIEND_LIST_SUCCESS("LIST_FRIEND_201", HttpStatus.CREATED, "친구 리스트업이 성공적으로 완료되었습니다."),    
+    FRIEND_UPDATE_SUCCESS("UPDATE_FRIEND_201", HttpStatus.CREATED, "친구 수정이 성공적으로 완료되었습니다."),    
     FRIEND_INVITE_SUCCESS("INVITE_FRIEND_201", HttpStatus.CREATED, "친구 신청이 성공적으로 완료되었습니다."),    
     INVITE_ALREADY_EXIST("INVITE_FRIEND_409", HttpStatus.CONFLICT, "이미 진행중인 초대가 있습니다."),    
         

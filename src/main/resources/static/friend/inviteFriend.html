@@ -9,19 +9,81 @@
 </head>
 <body>
     <h1>친구 초대</h1>
-    
+
     <form id="inviteFriendForm">
         <label for="inviteeEmail">초대할 친구 이메일:</label>
         <input type="text" id="inviteeEmail" name="inviteeEmail" required><br><br>
-        
+
         <input type="hidden" name="_csrf" id="_csrf" value="">
-        
+
         <button type="submit">초대 보내기</button>
     </form>
-    
+
     <div id="message" class="message"></div>
 
+  	<h2>받은 친구 요청</h2>
+    <div id="inviteListContainer"></div>
+
+
+
+
+
     <script>
+
+	    function loadFriendRequests() {
+	        $.ajax({
+	            url: '/api/friend',
+	            type: 'GET',	            
+	            success: function (response) {
+                    const inviteList = response.data.invitesList;
+                    console.log(inviteList);
+                    const container = $('#inviteListContainer');
+                    container.empty();
+
+                    if ( inviteList.length === 0) {
+                        container.append('<p>받은 친구 요청이 없습니다.</p>');
+                        return;
+                    }
+
+                    inviteList.forEach(friend => {
+                        const inviterName = friend.friendId.inviter.userName;
+                        const inviterEmail = friend.friendId.inviter.email;
+                        const status = friend.status;
+
+                        const item = `
+                            <div>
+                                <p>보낸 사람: ${inviterName} (${inviterEmail}) - 상태: ${status}</p>
+                                <button class="accept-btn" data-email="${inviterEmail}">수락</button>
+                            </div>
+                        `;
+                        container.append(item);
+                    });
+                },
+                error: function () {
+                    alert('친구 요청 목록을 불러오는 데 실패했습니다.');
+                }
+
+	        });
+	    }
+	    // 친구 수락
+        // 수락 처리
+        $(document).on('click', '.accept-btn', function () {
+            const inviterEmail = $(this).data('email');
+            $.ajax({
+                url: '/api/friend',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ inviterEmail }),
+                success: function () {
+                    alert('수락 완료');
+                    location.reload();
+                },
+                error: function () {
+                    alert('수락 실패');
+                }
+            });
+        });
+
         $(document).ready(function () {
             // CSRF 토큰 가져오기
             fetch('/csrf-token', {
@@ -32,6 +94,10 @@
             .then(data => {
                 $('#_csrf').val(data.token); // CSRF 토큰 값 설정
             });
+
+
+
+            loadFriendRequests();
 
             // 폼 제출 이벤트 처리
             $('#inviteFriendForm').submit(function (e) {
@@ -47,7 +113,8 @@
                 }
 
                 $.ajax({
-                    url: '/api/friend/invite',
+
+                    url: '/api/friend',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ inviteeEmail: inviteeEmail }),

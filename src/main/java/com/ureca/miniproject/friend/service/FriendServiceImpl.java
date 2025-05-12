@@ -5,22 +5,28 @@ import static com.ureca.miniproject.common.BaseCode.INVITE_ALREADY_EXIST;
 import static com.ureca.miniproject.common.BaseCode.USER_NOT_FOUND;
 import static com.ureca.miniproject.friend.entity.Status.WAITING;
 
+import java.util.List;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.friend.controller.request.InviteFriendRequest;
+import com.ureca.miniproject.friend.controller.request.UpdateFriendRequest;
 import com.ureca.miniproject.friend.entity.Friend;
 import com.ureca.miniproject.friend.entity.FriendId;
+import com.ureca.miniproject.friend.entity.Status;
 import com.ureca.miniproject.friend.exception.InviteAlreadyExistException;
 import com.ureca.miniproject.friend.exception.UserNotFoundException;
 import com.ureca.miniproject.friend.repository.FriendRepository;
 import com.ureca.miniproject.friend.service.response.InviteFriendResponse;
+import com.ureca.miniproject.friend.service.response.ListFriendResponse;
+import com.ureca.miniproject.friend.service.response.UpdateFriendResponse;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 @Service
 @Transactional
@@ -71,13 +77,68 @@ public class FriendServiceImpl implements FriendService {
 		
 		friendRepository.flush();
 
-		
-		//중복된 친구 추가 방지 -> key를 multikey로 수정 -> done
-		//todo : 상호 참조 친구 추가 방지
-		//	   : 예외 처리 : 이미 보낸 초대입니다. 상대방이 보낸 초대입니다. 없는 사용자입니다. 
-		
+			
 		return new InviteFriendResponse(friend1.getFriendId().getInvitee().getUserName(), friend1.getFriendId().getInviter().getUserName());
 	}
+	
+
+	@Override
+	public UpdateFriendResponse updateFriend(UpdateFriendRequest updateFriendRequest) {
+		
+		
+		
+		User inviter = userRepository.findByEmail(updateFriendRequest.getInviterEmail())
+	            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));						
+		userRepository.save(inviter);		
+		userRepository.flush();
+		
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();			
+		User invitee = userRepository.findByEmail(myUserDetails.getEmail()).orElseThrow();		
+		userRepository.save(invitee);
+		userRepository.flush();
+		
+		
+		FriendId friendId1 = FriendId.builder().invitee(invitee).inviter(inviter).build();
+		FriendId friendId2 = FriendId.builder().invitee(inviter).inviter(invitee).build();
+		
+		
+		Status beforeStatus = friendRepository.findById(friendId1).get().getStatus();
+		
+		friendRepository.save(
+					Friend.builder()
+						  .friendId(friendId1)
+						  .status(updateFriendRequest.getStatusDesired())						  
+						  .build()
+				);
+		
+		friendRepository.save(
+				Friend.builder()
+				.friendId(friendId2)
+				.status(updateFriendRequest.getStatusDesired())						  
+				.build()
+				);
+		
+		Status afterStatus = friendRepository.findById(friendId1).get().getStatus();
+		return new UpdateFriendResponse(beforeStatus,afterStatus );
+	}
+
+	@Override
+	public ListFriendResponse listFriend() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
+		User invitee = userRepository.findByEmail(myUserDetails.getEmail()).get();		
+		System.out.println(invitee.getId());
+		List<Friend> friends = friendRepository.findByFriendIdInviteeId(invitee.getId());
+		
+		
+		for(Friend friend : friends) {
+			System.out.println("id" + friend.getFriendId().getInviter().getEmail());
+		}
+		return new ListFriendResponse(friends);
+	}
+	
+	
 	
 	
 

@@ -4,10 +4,7 @@ import com.ureca.miniproject.common.ApiResponse;
 import com.ureca.miniproject.game.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.ureca.miniproject.common.BaseCode.*;
 
@@ -25,5 +22,13 @@ public class GameController {
         return ResponseEntity
                 .status(GAME_ROOM_START_SUCCESS.getStatus())
                 .body(ApiResponse.ok(GAME_ROOM_START_SUCCESS));
+    }
+
+    @PostMapping("/{roomId}/death")
+    public ResponseEntity<ApiResponse<?>> joinGame(@PathVariable("roomId") Long roomId, @RequestParam String username) {
+        gameService.updateDeathStatus(roomId, username);
+
+        return ResponseEntity.status(GAME_PARTICIPANT_DEATH_SUCCESS.getStatus())
+                .body(ApiResponse.ok(GAME_PARTICIPANT_DEATH_SUCCESS));
     }
 }

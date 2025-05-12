@@ -15,4 +15,5 @@ public interface GameParticipantRepository extends JpaRepository<GameParticipant
     List<GameParticipant> findAllByGameRoom_Id(Long roomId);
     Optional<GameParticipant> findByUserAndStatus(User user, ParticipantStatus status);
     void deleteByUserAndGameRoom(User user, GameRoom gameRoom);
+    Optional<GameParticipant> findByUserAndGameRoom_Id(User user, Long roomId);
 }

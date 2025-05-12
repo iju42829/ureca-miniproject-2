@@ -3,8 +3,13 @@ package com.ureca.miniproject.game.service;
 import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.entity.GameRoom;
 import com.ureca.miniproject.game.entity.RoomStatus;
+import com.ureca.miniproject.game.exception.GameParticipantNotFoundException;
 import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
+import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
+import com.ureca.miniproject.user.entity.User;
+import com.ureca.miniproject.user.exception.UserNotFoundException;
+import com.ureca.miniproject.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +25,9 @@ import static com.ureca.miniproject.game.entity.ParticipantRole.*;
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
 
+    private final GameParticipantRepository gameParticipantRepository;
     private final GameRoomRepository gameRoomRepository;
+    private final UserRepository userRepository;
 
     @Override
     public void startGame(Long roomId) {
@@ -41,5 +48,16 @@ public class GameServiceImpl implements GameService {
                 p.setRole(CITIZEN);
             }
         }
+    }
+
+    @Override
+    public void updateDeathStatus(Long roomId, String username) {
+        User user = userRepository.findByUserName((username))
+                .orElseThrow(()-> new UserNotFoundException(USER_NOT_FOUND));
+
+        GameParticipant gameParticipant = gameParticipantRepository.findByUserAndGameRoom_Id(user, roomId)
+                .orElseThrow(() -> new GameParticipantNotFoundException(GAME_PARTICIPANT_NOT_FOUND));
+
+        gameParticipant.setIsAlive(false);
     }
 }

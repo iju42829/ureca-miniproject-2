@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>친구 초대</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>친구 초대</h1>
+    
+    <form id="inviteFriendForm">
+        <label for="inviteeEmail">초대할 친구 이메일:</label>
+        <input type="text" id="inviteeEmail" name="inviteeEmail" required><br><br>
+        
+        <input type="hidden" name="_csrf" id="_csrf" value="">
+        
+        <button type="submit">초대 보내기</button>
+    </form>
+    
+    <div id="message" class="message"></div>
+
+    <script>
+        $(document).ready(function () {
+            // CSRF 토큰 가져오기
+            fetch('/csrf-token', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(res => res.json())
+            .then(data => {
+                $('#_csrf').val(data.token); // CSRF 토큰 값 설정
+            });
+
+            // 폼 제출 이벤트 처리
+            $('#inviteFriendForm').submit(function (e) {
+                e.preventDefault();
+
+                const inviteeEmail = $('#inviteeEmail').val();
+                const csrfToken = $('#_csrf').val();
+                const messageDiv = $('#message');
+
+                if (!inviteeEmail) {
+                    messageDiv.css('color', 'red').text("이메일을 입력해주세요.");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/api/friend/invite',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ inviteeEmail: inviteeEmail }),
+
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken); // CSRF 토큰 추가
+                    },
+
+                    success: function (response) {
+                        messageDiv.css('color', 'green').text("초대가 성공적으로 전송되었습니다.");
+                        $('#inviteeEmail').val(''); // 이메일 입력 필드 초기화
+                    },
+
+                    error: function (xhr) {
+                        const res = xhr.responseJSON;
+                        messageDiv.css('color', 'red').text("초대 실패: " + res.message);
+                        console.log(xhr.status);
+                        if (xhr.status === 404) {
+                            // 상태 코드 404일 때 실패 처리
+                            const res = xhr.responseJSON;
+                            messageDiv.css('color', 'red').text("초대 실패: 초대하려는 사용자가 존재하지 않습니다." );
+                        }else if(xhr.status === 409){
+                        	const res = xhr.responseJSON;
+                            messageDiv.css('color', 'red').text("초대 실패: 이미 진행중인 초대가 있습니다." );
+                        }else {
+                            // 다른 상태 코드 처리
+                            messageDiv.css('color', 'red').text("알 수 없는 오류가 발생했습니다.");
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

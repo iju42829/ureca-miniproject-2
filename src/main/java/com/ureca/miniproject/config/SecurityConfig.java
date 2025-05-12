@@ -16,7 +16,7 @@ public class SecurityConfig {
 			MyAuthenticationSuccessHandler successHandler,
 			MyAuthenticationFailureHandler failureHandler			
 			) throws Exception {
-		return http			 
+		return http					
 			 .authorizeHttpRequests(
 					 authz -> {
 					 authz.requestMatchers(
@@ -36,7 +36,7 @@ public class SecurityConfig {
 				 .anyRequest().authenticated();
 				 }
 	        )
-			 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())) //cookie로 csrf token를 넣어준다.(front,back 둘다에게?) 그 다음 부터는 이제 프론트에서 백엔드쪽으로 계쏙 token을 내려줘야 로그인 가능하다., cookie 기반으로 만들라고 요청을 하고, 				
+			 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())) 				
 			 .formLogin(form -> 
 				form					
 					.loginPage("/login.html")

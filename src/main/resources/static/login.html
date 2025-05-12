@@ -9,10 +9,12 @@
     <hr>
     
     <div>
+
         <input type="text" id="email" name="email" required value="test1@naver.com">
     </div>
     <div>
         <input type="password" id="password" name="password" required value="1234">
+
     </div>
     
     <!-- Add hidden input for CSRF token -->
@@ -38,6 +40,7 @@
 	    let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
 	    let data = await response.json();
 	    document.querySelector('#_csrf').value = data.token;
+	    console.log(data.token);
 	}
 	
 	async function login(){

@@ -11,4 +11,14 @@ public class PageController {
     public String test(@RequestParam("roomId") Long roomId) {
         return "/game/gameDetail.html";
     }
+    
+    @GetMapping("/login")
+    public String login() {
+    	return "/login.html";
+    }
+    
+    @GetMapping("/register")
+    public String register() {
+    	return "/register.html";
+    }
 }

@@ -4,14 +4,14 @@ import java.security.Principal;
 
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 
 import com.ureca.miniproject.chat.dto.ChatMessage;
+import com.ureca.miniproject.chat.dto.VoteResultDto;
+import com.ureca.miniproject.chat.service.VoteService;
 import com.ureca.miniproject.chat.tool.ChatRoomUserTool;
-
 
 import lombok.RequiredArgsConstructor;
 
@@ -52,5 +52,7 @@ public class ChatController {
         message.setParticipants(userRepo.getUsers(roomId));
         return message;
     }
+    
+
 
 }

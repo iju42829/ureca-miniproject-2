@@ -62,9 +62,6 @@
 	    roomId = parseInt(roomId); 
 	}
 
-    let sender = sessionStorage.getItem("username") || "익명";
-    sessionStorage.setItem("username", sender);
-
     const socket = new SockJS("/ws/chat");
     const stompClient = Stomp.over(socket);
 
@@ -73,42 +70,61 @@
     let debateEndTime = null;
     const timeSpan = document.getElementById("time");
 
+    let sender = null;  
+
     stompClient.connect({}, () => {
         stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
             const data = JSON.parse(msg.body);
-            const isMe = sender === data.sender;
+            
 
             console.log("수신 메시지:", data);
 
             if (data.type === "TALK") {
+            	const isMe = data.sender === sender;
                 displayMessage(data.sender, data.message, isMe);
+
             } else if (data.type === "ENTER" || data.type === "LEAVE") {
-                displayNotice(data.message);
+             	sender = data.sender;  
+                const action = data.type === "ENTER" ? "입장하셨습니다" : "퇴장하셨습니다";
+                const nickname = data.sender || "알 수 없음";
+                const message = data.message && data.message.trim() !== ""
+                    ? data.message
+                    : `${nickname}님이 ${action}`;
+                displayNotice(message);
+
             } else if (data.type === "END_TIME") {
                 displayNotice(data.message);
                 clearInterval(debateTimer);
                 timeSpan.textContent = 0;
                 document.getElementById("end-timer-btn").disabled = true; 
                 showVoteModal(latestParticipants);
+
             } else if (data.type === "START_TIME") {
                 displayNotice(data.message);
                 handleStartTime(data.startTime);
-
+                
+            } else if (data.type === "VOTE_RESULT") {
+            	console.log("voteresult");
+                if (data.decided) {
+                    displayNotice(`${data.target}님이 과반수 득표로 지목되었습니다.`);
+                } else {
+                    displayNotice("투표가 진행 중입니다...");
+                }
             }
+
 
             if (data.participants) {
                 updateParticipantList(data.participants);
             }
         });
 
-      
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
             roomId: roomId,
-            sender: sender,
             message: "",
             type: "ENTER"
         }));
     });
+
 
     window.addEventListener("beforeunload", () => {
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
@@ -197,10 +213,13 @@
         }
 
         const votedUser = selected.textContent;
+       
         stompClient.send("/app/chat.vote/" + roomId, {}, JSON.stringify({
             sender: sender,
-            voted: votedUser,
-            type: "VOTE"
+            roomId: roomId,
+            message: votedUser,
+            type: "VOTE",
+            participants: latestParticipants
         }));
 
         document.getElementById("vote-modal").style.display = "none";

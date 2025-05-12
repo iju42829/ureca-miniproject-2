@@ -38,6 +38,7 @@
 	    let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
 	    let data = await response.json();
 	    document.querySelector('#_csrf').value = data.token;
+	    console.log(data.token);
 	}
 	
 	async function login(){

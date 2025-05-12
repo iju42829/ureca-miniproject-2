@@ -16,7 +16,7 @@ public class SecurityConfig {
 			MyAuthenticationSuccessHandler successHandler,
 			MyAuthenticationFailureHandler failureHandler			
 			) throws Exception {
-		return http			 
+		return http					
 			 .authorizeHttpRequests(
 					 authz -> {
 					 authz.requestMatchers(

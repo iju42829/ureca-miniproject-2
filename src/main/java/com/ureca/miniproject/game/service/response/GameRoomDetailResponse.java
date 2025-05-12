@@ -13,6 +13,7 @@ public class GameRoomDetailResponse {
     private String title;
     private Integer maxPlayer;
     private Integer currentPlayer;
+    private String gameRoomStatus;
     private Boolean isHost;
     private List<GameParticipantResponse> participantResponseList;
 }

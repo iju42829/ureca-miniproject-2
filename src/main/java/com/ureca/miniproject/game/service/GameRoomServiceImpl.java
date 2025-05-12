@@ -64,7 +64,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public ListGameRoomResponse listGameRoom() {
-        List<GameRoomResponse> gameRooms = gameRoomRepository.findAll().stream()
+        List<GameRoomResponse> gameRooms = gameRoomRepository.findAllByRoomStatus(WAITING).stream()
                 .map(gameRoomMapper::toGameRoomResponse)
                 .toList();
 

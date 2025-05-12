@@ -1,6 +1,8 @@
 package com.ureca.miniproject.game.entity;
 
+import com.ureca.miniproject.common.BaseCode;
 import com.ureca.miniproject.common.BaseTimeEntity;
+import com.ureca.miniproject.game.exception.GameRoomCapacityExceededException;
 import com.ureca.miniproject.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -55,6 +57,10 @@ public class GameRoom extends BaseTimeEntity {
     }
 
     public void addCurrentPlayer() {
+        if (this.currentPlayer + 1 > this.maxPlayer) {
+            throw new GameRoomCapacityExceededException(BaseCode.GAME_ROOM_CAPACITY_EXCEEDED);
+        }
+
         this.currentPlayer++;
     }
 

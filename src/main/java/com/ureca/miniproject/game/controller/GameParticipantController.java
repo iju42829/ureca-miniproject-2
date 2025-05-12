@@ -4,6 +4,7 @@ import com.ureca.miniproject.common.ApiResponse;
 import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.game.service.GameParticipantService;
 import com.ureca.miniproject.game.service.response.ParticipantCheckResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,10 @@ public class GameParticipantController {
     private final GameParticipantService gameParticipantService;
 
     @PostMapping("/{roomId}/join")
-    public ResponseEntity<ApiResponse<?>> joinGameRoom(@PathVariable Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails) {
+    public ResponseEntity<ApiResponse<?>> joinGameRoom(@PathVariable Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails, HttpSession session) {
         Long participant = gameParticipantService.createParticipant(roomId, myUserDetails);
+
+        session.setAttribute("roomId", roomId);
 
         return ResponseEntity.ok(ApiResponse.ok(GAME_ROOM_CREATE_SUCCESS));
     }

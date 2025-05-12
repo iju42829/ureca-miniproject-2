@@ -1,6 +1,7 @@
 package com.ureca.miniproject.game.controller;
 
 import com.ureca.miniproject.common.ApiResponse;
+import com.ureca.miniproject.game.controller.request.EndGameRequest;
 import com.ureca.miniproject.game.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,5 +31,14 @@ public class GameController {
 
         return ResponseEntity.status(GAME_PARTICIPANT_DEATH_SUCCESS.getStatus())
                 .body(ApiResponse.ok(GAME_PARTICIPANT_DEATH_SUCCESS));
+    }
+
+    @PostMapping("/{roomId}/end")
+    public ResponseEntity<ApiResponse<?>> endGame(@PathVariable("roomId") Long roomId, @RequestBody EndGameRequest endGameRequest) {
+        gameService.endGame(roomId, endGameRequest);
+
+        return ResponseEntity
+                .status(GAME_RESULT_CREATE_SUCCESS.getStatus())
+                .body(ApiResponse.ok(GAME_RESULT_CREATE_SUCCESS));
     }
 }

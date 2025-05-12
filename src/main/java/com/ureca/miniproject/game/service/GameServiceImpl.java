@@ -1,11 +1,11 @@
 package com.ureca.miniproject.game.service;
 
-import com.ureca.miniproject.game.entity.GameParticipant;
-import com.ureca.miniproject.game.entity.GameRoom;
-import com.ureca.miniproject.game.entity.RoomStatus;
+import com.ureca.miniproject.game.controller.request.EndGameRequest;
+import com.ureca.miniproject.game.entity.*;
 import com.ureca.miniproject.game.exception.GameParticipantNotFoundException;
 import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
+import com.ureca.miniproject.game.repository.GameResultRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.exception.UserNotFoundException;
@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static com.ureca.miniproject.common.BaseCode.*;
 import static com.ureca.miniproject.game.entity.ParticipantRole.*;
+import static com.ureca.miniproject.game.entity.ParticipantStatus.*;
 
 @Service
 @Transactional
@@ -26,6 +27,7 @@ import static com.ureca.miniproject.game.entity.ParticipantRole.*;
 public class GameServiceImpl implements GameService {
 
     private final GameParticipantRepository gameParticipantRepository;
+    private final GameResultRepository gameResultRepository;
     private final GameRoomRepository gameRoomRepository;
     private final UserRepository userRepository;
 
@@ -48,6 +50,34 @@ public class GameServiceImpl implements GameService {
                 p.setRole(CITIZEN);
             }
         }
+    }
+
+    @Override
+    public void endGame(Long roomId, EndGameRequest endGameRequest) {
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new GameRoomNotFoundException(GAME_ROOM_NOT_FOUND));
+
+        gameRoom.setRoomStatus(RoomStatus.FINISHED);
+
+        List<GameParticipant> participants = gameParticipantRepository.findAllByGameRoom_Id(roomId);
+
+        for (GameParticipant p : participants)
+            p.setStatus(LEFT);
+
+        List<GameResult> results = participants.stream()
+                .map(p -> {
+                    GameResultStatus outcome = endGameRequest.getWinners().contains(p.getUser().getUserName())
+                            ? GameResultStatus.WIN
+                            : GameResultStatus.LOSE;
+                    return GameResult.builder()
+                            .gameRoom(gameRoom)
+                            .user(p.getUser())
+                            .status(outcome)
+                            .build();
+                })
+                .toList();
+
+        gameResultRepository.saveAll(results);
     }
 
     @Override

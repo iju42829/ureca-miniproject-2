@@ -117,6 +117,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
         return GameRoomDetailResponse.builder()
                 .title(gameRoom.getTitle())
+                .gameRoomStatus(gameRoom.getRoomStatus().name())
                 .maxPlayer(gameRoom.getMaxPlayer())
                 .currentPlayer(gameRoom.getCurrentPlayer())
                 .isHost(gameRoom.getHostUser() == user)

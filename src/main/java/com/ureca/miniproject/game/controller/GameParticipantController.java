@@ -21,10 +21,10 @@ public class GameParticipantController {
     private final GameParticipantService gameParticipantService;
 
     @PostMapping("/{roomId}/join")
-    public ResponseEntity<ApiResponse<?>> joinGameRoom(@PathVariable Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails, HttpSession session) {
+    public ResponseEntity<ApiResponse<?>> joinGameRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal MyUserDetails myUserDetails, HttpSession session) {
         Long participant = gameParticipantService.createParticipant(roomId, myUserDetails);
 
-        session.setAttribute("roomId", roomId);
+//        session.setAttribute("roomId", roomId);
 
         return ResponseEntity.ok(ApiResponse.ok(GAME_ROOM_CREATE_SUCCESS));
     }

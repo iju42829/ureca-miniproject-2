@@ -1,65 +1,132 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>게임 방 상세</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <style>
+        .btn { padding: 8px 12px; margin: 4px; cursor: pointer; }
+        .btn-leave { background: #f66; color: #fff; }
+        .btn-delete { background: #c00; color: #fff; }
+        .btn-start  { background: #6c6; color: #fff; }
+    </style>
 </head>
 <body>
 <h1 id="roomTitle">로딩 중...</h1>
 <p id="roomInfo"></p>
-<h3>참여자</h3>
-<ul id="participantList">
-    <!-- 여기로 아이템들이 들어갑니다 -->
-</ul>
 
-<button id="backBtn">목록으로 돌아가기</button>
+<h3>참여자</h3>
+<ul id="participantList"></ul>
+
+<div id="actionBtn"></div>
+
+<!-- CSRF 토큰 보관용 히든 필드 -->
+<input type="hidden" id="_csrf" value="">
+<input type="hidden" id="_csrf_header" value="">
 
 <script>
     $(function() {
-        // 1) URL에서 roomId 꺼내기 (예: ?roomId=123)
-        const params = new URLSearchParams(window.location.search);
-        const roomId = params.get('roomId');
-        if (!roomId) {
-            $('#participantList').append('<li>잘못된 접근입니다.</li>');
-            return;
+        let csrfToken, csrfHeader;
+
+        fetch('/csrf-token', { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                csrfToken  = data.token;
+                csrfHeader = data.headerName;
+                $('#_csrf').val(csrfToken);
+                $('#_csrf_header').val(csrfHeader);
+
+                loadRoomDetail();
+            });
+
+        function loadRoomDetail() {
+            const params = new URLSearchParams(window.location.search);
+            const roomId = params.get('roomId');
+            if (!roomId) {
+                $('#participantList').append('<li>잘못된 접근입니다.</li>');
+                return;
+            }
+
+            $.ajax({
+                url: `/api/rooms/${roomId}`,
+                type: 'GET',
+                dataType: 'json'
+            })
+                .done(function(res) {
+                    const d = res.data;
+                    $('#roomTitle').text(d.title);
+                    $('#roomInfo').text(`인원: ${d.currentPlayer}/${d.maxPlayer}`);
+
+                    const $ul = $('#participantList').empty();
+                    if (!d.participantResponseList?.length) {
+                        $ul.append('<li>참여자가 없습니다.</li>');
+                    } else {
+                        d.participantResponseList.forEach(p => {
+                            $ul.append(`<li>[${p.id}] ${p.name} — 상태: ${p.status}</li>`);
+                        });
+                    }
+
+                    const $action = $('#actionBtn').empty();
+                    if (d.isHost) {
+                        $action
+                            .append('<button id="deleteBtn" class="btn btn-delete">방 삭제</button>')
+                            .append('<button id="startBtn" class="btn btn-start">게임 시작</button>');
+
+                        $('#deleteBtn').on('click', () => deleteRoom(roomId));
+                        $('#startBtn').on('click', () => startGame(roomId));
+                    } else {
+                        $action.append('<button id="leaveBtn" class="btn btn-leave">나가기</button>');
+                        $('#leaveBtn').on('click', () => leaveRoom(roomId));
+                    }
+                })
+                .fail(xhr => {
+                    $('#participantList').empty()
+                        .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
+                });
         }
 
-        // 2) AJAX 요청으로 ListGameParticipantResponse 받기
-        $.ajax({
-            url: `/api/rooms/${roomId}`,
-            type: 'GET',
-            dataType: 'json',
-            success: function(res) {
-                // 만약 ApiResponse<ListGameParticipantResponse> 형태라면:
-                // const list = res.data.participantResponseList;
-                // 바로 DTO만 리턴한다면:
-                const list = res.participantResponseList || res.data.participantResponseList;
-                const $ul = $('#participantList').empty();
+        function deleteRoom(roomId) {
+            if (!confirm('정말 방을 삭제하시겠습니까?')) return;
+            $.ajax({
+                url: `/api/rooms/${roomId}`,
+                type: 'DELETE',
+                beforeSend: xhr => xhr.setRequestHeader(csrfHeader, csrfToken)
+            })
+                .done(() => {
+                    alert('방이 삭제되었습니다.');
+                    window.location.href = '/game/gameRoomList.html';
+                })
+                .fail(xhr => alert(`삭제 실패: ${xhr.status}`));
+        }
 
-                if (!list || !list.length) {
-                    $ul.append('<li>참여자가 없습니다.</li>');
-                    return;
-                }
+        function leaveRoom(roomId) {
+            $.ajax({
+                url: `/api/rooms/${roomId}/leave`,
+                type: 'DELETE',
+                beforeSend: xhr => xhr.setRequestHeader(csrfHeader, csrfToken)
+            })
+                .done(() => {
+                    alert('방을 나갔습니다.');
+                    window.location.href = '/game/gameRoomList.html';
+                })
+                .fail(xhr => alert(`나가기 실패: ${xhr.status}`));
+        }
 
-                // 3) 각 GameParticipantResponse 렌더링
-                list.forEach(function(p) {
-                    const statusClass = p.isAlive ? 'alive' : 'dead';
-                    const statusText  = p.isAlive ? '생존' : '사망';
-
-                    $ul.append(`
-              <li class="${statusClass}">
-                [${p.id}] ${p.name} — 상태: ${p.status} (${statusText})
-              </li>
-            `);
-                });
-            },
-            error: function(xhr) {
-                $('#participantList').empty()
-                    .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
-            }
-        });
+        function startGame(roomId) {
+            if (!confirm('게임을 시작하시겠습니까?')) return;
+            $.ajax({
+                url: `/api/games/${roomId}/start`,
+                type: 'POST',
+                beforeSend: xhr => xhr.setRequestHeader(csrfHeader, csrfToken)
+            })
+                .done(() => {
+                    alert('게임이 시작되었습니다.');
+                    // 예: 실제 플레이 페이지로 이동
+                    window.location.href = `/game/play.html?roomId=${roomId}`;
+                })
+                .fail(xhr => alert(`게임 시작 실패: ${xhr.status}`));
+        }
     });
 </script>
 </body>

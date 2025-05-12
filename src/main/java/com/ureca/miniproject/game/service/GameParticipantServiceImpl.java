@@ -1,18 +1,13 @@
 package com.ureca.miniproject.game.service;
 
-import com.ureca.miniproject.common.BaseCode;
 import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.entity.GameRoom;
-import com.ureca.miniproject.game.entity.ParticipantStatus;
 import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
 import com.ureca.miniproject.game.mapper.GameParticipantMapper;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
-import com.ureca.miniproject.game.service.response.GameParticipantResponse;
-import com.ureca.miniproject.game.service.response.GameRoomResponse;
-import com.ureca.miniproject.game.service.response.ListGameParticipantResponse;
-import com.ureca.miniproject.game.service.response.ListGameRoomResponse;
+import com.ureca.miniproject.game.service.response.ParticipantCheckResponse;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.exception.UserNotFoundException;
 import com.ureca.miniproject.user.repository.UserRepository;
@@ -20,10 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
-import static com.ureca.miniproject.common.BaseCode.*;
-import static com.ureca.miniproject.game.entity.ParticipantStatus.*;
+import static com.ureca.miniproject.common.BaseCode.GAME_ROOM_NOT_FOUND;
+import static com.ureca.miniproject.common.BaseCode.USER_NOT_FOUND;
+import static com.ureca.miniproject.game.entity.ParticipantStatus.JOINED;
 
 @Service
 @Transactional
@@ -59,15 +53,15 @@ public class GameParticipantServiceImpl implements GameParticipantService {
     }
 
     @Override
-    public ListGameParticipantResponse listGameParticipant(Long roomId) {
-        List<GameParticipantResponse> gameParticipantResponseList = gameParticipantRepository.findAllByGameRoom_Id(roomId).stream()
-                .map(gameParticipantMapper::toGameParticipantResponse)
-                .toList();
+    public ParticipantCheckResponse checkParticipant(MyUserDetails myUserDetails) {
+        User user = userRepository.findByEmail(myUserDetails.getEmail()).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
-        ListGameParticipantResponse listGameParticipantResponse = new ListGameParticipantResponse();
+        GameParticipant joinedParticipant = gameParticipantRepository.findByUserAndStatus(user, JOINED).orElse(null);
 
-        listGameParticipantResponse.setParticipantResponseList(gameParticipantResponseList);
+        if (joinedParticipant == null) {
+            return null;
+        }
 
-        return listGameParticipantResponse;
+        return new ParticipantCheckResponse(joinedParticipant.getGameRoom().getId());
     }
 }

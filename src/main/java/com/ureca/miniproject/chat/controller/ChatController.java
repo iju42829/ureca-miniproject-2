@@ -1,5 +1,7 @@
 package com.ureca.miniproject.chat.controller;
 
+import java.security.Principal;
+
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 
@@ -22,8 +24,11 @@ public class ChatController {
 
     @MessageMapping("/chat.send/{roomId}")
     @SendTo("/topic/chat/{roomId}")
-    public ChatMessage send(@Payload ChatMessage message, @DestinationVariable("roomId") String roomId) {
-    	System.out.println(message+roomId+"send");
+    public ChatMessage send(@Payload ChatMessage message, @DestinationVariable("roomId") String roomId, Principal principal) {
+    	
+    	String username = principal.getName();
+    	System.out.println(message+roomId+username+"/send");
+    	message.setSender(username);
         if (message.getType() == ChatMessage.MessageType.ENTER) {
             userRepo.addUser(roomId, message.getSender());
             message.setMessage(message.getSender() + "님이 입장하셨습니다.");

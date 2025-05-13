@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import com.ureca.miniproject.friend.entity.Friend;
 import com.ureca.miniproject.friend.entity.FriendId;
+import com.ureca.miniproject.friend.entity.Status;
+
+
 
 
 
@@ -15,9 +18,13 @@ import com.ureca.miniproject.friend.entity.FriendId;
 public interface FriendRepository extends JpaRepository<Friend, FriendId> {
 	//crud 생성 완료
 
-	Boolean existsByFriendId(FriendId friendId);
+
+	Boolean existsByFriendIdAndStatus(FriendId friendId,Status status);
+	Boolean existsByFriendIdInviteeIdAndStatus(Long id,Status status);
 	
 	List<Friend> findByFriendId(FriendId friendId);
-	List<Friend> findByFriendIdInviteeId(Long Id);
+	List<Friend> findByFriendIdInviteeIdAndStatus(Long id, Status status);
+	List<Friend> findByFriendIdInviteeIdOrFriendIdInviterIdAndStatus(Long id1,Long id2, Status status);
+	
 	
 }

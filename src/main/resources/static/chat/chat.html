@@ -27,26 +27,21 @@
   </div>
 </div>
 
-
-
 <div class="sidebar">
     <button onclick="toggleRulebook(true)">룰북 보기</button>
-    <div id="timer" style="visibility: hidden;">남은 시간: <span id="time">...</span>초</div>
+    <div id="timer" style="visibility: visible;">남은 시간: <span id="time">0</span>초</div>
     <button id="end-timer-btn" onclick="endTimerNow()">시간 조기 종료</button>
-	<button onclick="startDebate()">토론 시작</button>
+    <button onclick="startDebate()">토론 시작</button>
 
     <h4>참여자 목록</h4>
     <ul id="participant-list" class="participant-list"></ul>
 </div>
-
 
 <div class="main">
     <header>채팅방</header>
     <div id="chat-box"></div>
     <footer>
         <textarea id="message" placeholder="메시지를 입력하세요" rows="1" style="resize: none; width: 100%;"></textarea>
-
-
         <button onclick="sendMessage()">전송</button>
     </footer>
 </div>
@@ -54,15 +49,16 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    let roomId = sessionStorage.getItem("roomId");
-    if (!roomId) {
-        console.warn("sessionStorage에서 roomId를 찾을 수 없어 기본값 42를 사용합니다.");
-        roomId = 42;
-    } else {
-        roomId = parseInt(roomId);
-    }
+document.addEventListener("DOMContentLoaded",  async () => {
+    let roomId = sessionStorage.getItem("roomId") || 42;
+    roomId = parseInt(roomId);
+
     let sender = null;
+    let latestParticipants = [];
+    const timeSpan = document.getElementById("time");
+
+    const displayedMessageIds = new Set();
+
     async function fetchSender() {
         try {
             const res = await fetch("/api/user/me", { credentials: "same-origin" });
@@ -74,22 +70,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    let debateTimer = null;
-    let debateEndTime = null;
-    let latestParticipants = [];
-    initializeWebSocket()
-    loadChatHistory();
-
     async function initializeWebSocket() {
-    	sender = await fetchSender();
-    	console.log(sender);
+        sender = await fetchSender();
         const socket = new SockJS("/ws/chat");
         stompClient = Stomp.over(socket);
 
         stompClient.connect({}, () => {
             stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
                 const data = JSON.parse(msg.body);
-
+				console.log(data);
                 if (data.type === "TALK") {
                     if (data.message?.startsWith("남은 시간:")) {
                         const remaining = data.message.match(/\d+/);
@@ -102,20 +91,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     displayNotice(data);
                 } else if (data.type === "END_TIME") {
                     displayNotice(data);
-                    clearInterval(debateTimer);
                     timeSpan.textContent = "0";
                     document.getElementById("end-timer-btn").disabled = true;
                     showVoteModal(latestParticipants);
                 } else if (data.type === "START_TIME") {
                     displayNotice(data);
-                    handleStartTime(data.startTime);
-                } else if (data.type === "VOTE_RESULT") {
-                    displayNotice(data.decided
-                        ? `${data.target}님이 과반수 득표로 지목되었습니다.`
-                        : "투표가 진행 중입니다...");
-                }
+                } else if (data.type === "SYSTEM") {
+                    displayNotice(data);
+                } 
 
-                if (data.participants) updateParticipantList(data.participants);
+                if (data.participants) updateParticipantList(data.participants,data.deadUsers);
             });
 
             stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
@@ -127,24 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-	
-    
-
-    const timeSpan = document.getElementById("time");
-    const timerDiv = document.getElementById("timer");
-
-    fetch(`/api/state/${roomId}/time-left`)
-	    .then(res => res.json())
-		    .then(data => {
-		        if (data.startTime) {
-		            handleStartTime(data.startTime);
-		        } else {
-		            timeSpan.textContent = "0";
-		        }
-		
-		        timerDiv.style.visibility = "visible";
-    });
-
     async function loadChatHistory() {
         fetch(`/api/state/${roomId}/messages`)
             .then(res => res.json())
@@ -154,18 +121,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (msg.sender === "SYSTEM") return;
                         const isMe = msg.sender === sender;
                         displayMessage(msg.sender, msg.message, isMe);
-                    } else if (msg.type === "ENTER" || msg.type === "LEAVE") {
-                        displayNotice(msg.message);
-                    } else if (msg.type === "START_TIME" || msg.type === "END_TIME") {
-                        displayNotice(msg.message);
+                    } else {
+                    	console.log("sssssss");
+                    	console.log(msg);
+                        displayNotice(msg);
                     }
                 });
             });
     }
-
-
-
-    
 
     window.addEventListener("beforeunload", () => {
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
@@ -189,24 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("message").value = '';
     }
 
-    function handleStartTime(startTimeMillis) {
-        const duration = 120 * 1000;
-        debateEndTime = startTimeMillis + duration;
-
-        if (debateTimer) clearInterval(debateTimer);
-
-        debateTimer = setInterval(() => {
-            const now = Date.now();
-            const remaining = Math.max(0, Math.floor((debateEndTime - now) / 1000));
-            timeSpan.textContent = remaining;
-            if (remaining <= 0) {
-                clearInterval(debateTimer);
-                document.getElementById("end-timer-btn").disabled = true;
-                showVoteModal(latestParticipants);
-            }
-        }, 500);
-    }
-
     function displayMessage(sender, message, isMe) {
         const chatBox = document.getElementById("chat-box");
         const msgDiv = document.createElement("div");
@@ -220,12 +165,8 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    const displayedMessageIds = new Set();
-
     function displayNotice(messageObj) {
         if (!messageObj || !messageObj.message || displayedMessageIds.has(messageObj.id)) return;
-        console.log("sss");
-		console.log(displayedMessageIds);
         displayedMessageIds.add(messageObj.id);
 
         const chatBox = document.getElementById("chat-box");
@@ -243,16 +184,19 @@ document.addEventListener("DOMContentLoaded", () => {
         overlay.style.display = show ? 'block' : 'none';
     }
 
-    function updateParticipantList(participants) {
+    function updateParticipantList(participants, deadUsers) {
         latestParticipants = participants;
         const list = document.getElementById("participant-list");
         list.innerHTML = '';
+        deadUsers = deadUsers || [];
         participants.forEach(p => {
             const item = document.createElement("li");
             item.textContent = p;
+            if (deadUsers.includes(p)) item.classList.add("dead");  
             list.appendChild(item);
         });
     }
+
 
     function showVoteModal(participants) {
         const voteList = document.getElementById("vote-list");
@@ -315,18 +259,18 @@ document.addEventListener("DOMContentLoaded", () => {
     window.endTimerNow = endTimerNow;
     window.startDebate = startDebate;
     window.toggleRulebook = toggleRulebook;
-    
+
     document.getElementById("message").addEventListener("keydown", function(event) {
         if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault(); 
-            sendMessage();         
+            event.preventDefault();
+            sendMessage();
         }
     });
 
-
+    await initializeWebSocket();
+    await loadChatHistory();
 });
 </script>
 
 </body>
 </html>
-

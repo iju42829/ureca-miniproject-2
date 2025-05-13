@@ -1,5 +1,14 @@
 package com.ureca.miniproject.friend.service.response;
 
-public class updateFriendResponse {
-	
+import com.ureca.miniproject.friend.entity.Status;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
+@RequiredArgsConstructor
+@Setter@Getter
+public class UpdateFriendResponse {
+	private final Status beforeStatus;
+	private final Status afterStatus;
 }

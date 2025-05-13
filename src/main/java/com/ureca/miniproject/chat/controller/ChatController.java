@@ -49,6 +49,8 @@ public class ChatController {
         }
 
         message.setParticipants(userRepo.getUsers(roomId));
+        stateManager.saveChat(roomId, message);
+        System.out.println(message);
         return message;
     }
 }

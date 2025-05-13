@@ -198,13 +198,15 @@
                         const res = xhr.responseJSON;
                         messageDiv.css('color', 'red').text("초대 실패: " + res.message);
                         console.log(xhr.status);
-                        if (xhr.status === 404) {
-                            // 상태 코드 404일 때 실패 처리
+                        if (xhr.status != 201) {
                             const res = xhr.responseJSON;
-                            messageDiv.css('color', 'red').text("초대 실패: 초대하려는 사용자가 존재하지 않습니다." );
+                            messageDiv.css('color', 'red').text("초대 실패:" + res.message );
                         }else if(xhr.status === 409){
                         	const res = xhr.responseJSON;
-                            messageDiv.css('color', 'red').text("초대 실패: 이미 진행중인 초대가 있습니다." );
+                            messageDiv.css('color', 'red').text("초대 실패:" + res.message);
+                        }else if(xhr.status===406){
+                        	const res = xhr.responseJSON;
+                            messageDiv.css('color', 'red').text("초대 실패:" + res.message);
                         }else {
                             // 다른 상태 코드 처리
                             messageDiv.css('color', 'red').text("알 수 없는 오류가 발생했습니다.");
@@ -215,37 +217,64 @@
         });
         //친구들 listup
         function loadFriendList() {
-            const statusDesired = 'ACCEPTED';
-            $.ajax({
-                url: '/api/friend',
-                type: 'GET',
-                data: { statusDesired: statusDesired },
-                success: function (response) {
-                    const friendList = response.data.invitesList;
-                    const container = $('#friendListContainer');
-                    container.empty();
-                    console.log(friendList);
-                    if (friendList.length === 0) {
-                        container.append('<p>친구가 없습니다.</p>');
-                        return;
-                    }
+		    $.ajax({
+		        url: '/api/friend',
+		        type: 'GET',
+		        success: function (response) {
+		            const friendList = response.data.friendList;
+		            const container = $('#friendListContainer');
+		            container.empty();
+		            console.log(friendList);
+		
+		            if (friendList.length === 0) {
+		                container.append('<p>친구가 없습니다.</p>');
+		                return;
+		            }
+		
+		            friendList.forEach(friend => {
+		                const friendName = friend.userName;
+		                const friendEmail = friend.email;
+		
+		                const item = `
+		                    <div class="friend-item">
+		                        <p>${friendName} (${friendEmail})</p>
+		                        <button class="delete-btn" data-email="${friendEmail}">삭제</button>
+		                    </div>
+		                `;
+		                container.append(item);
+		            });
+		        },
+		        error: function () {
+		            alert('친구 목록을 불러오는 데 실패했습니다.');
+		        }
+		    });
+		    
+		 	// 친구 삭제 버튼 이벤트
+		    $(document).on('click', '.delete-btn', function () {
+		        const emailToDelete = $(this).data('email');
+		        const csrfToken = $('#_csrf').val();
 
-                    friendList.forEach(friend => {
-                        const friendName = friend.friendId.inviter.userName;
-                        const friendEmail = friend.friendId.inviter.email;
-                        const item = `
-                            <div class="friend-item">
-                                <p>${friendName} (${friendEmail})</p>
-                            </div>
-                        `;
-                        container.append(item);
-                    });
-                },
-                error: function () {
-                    alert('친구 목록을 불러오는 데 실패했습니다.');
-                }
-            });
-        }
+		        if (!confirm(`${emailToDelete} 친구를 삭제하시겠습니까?`)) return;
+
+		        $.ajax({
+		            url: '/api/friend',
+		            type: 'DELETE',		            
+		            data: {emailToDelete: emailToDelete },
+		            beforeSend: function (xhr) {
+		                xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken);
+		            },
+		            success: function () {
+		                alert('친구가 삭제되었습니다.');
+		                loadFriendList(); // 목록 갱신
+		            },
+		            error: function () {
+		                alert('친구 삭제에 실패했습니다.');
+		            }
+		        });
+		    });
+
+		}
+
 
     </script>
 </body>

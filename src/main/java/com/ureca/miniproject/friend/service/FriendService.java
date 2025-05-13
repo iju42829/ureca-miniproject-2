@@ -3,9 +3,9 @@ package com.ureca.miniproject.friend.service;
 
 import com.ureca.miniproject.friend.controller.request.InviteFriendRequest;
 import com.ureca.miniproject.friend.controller.request.UpdateFriendRequest;
-
 import com.ureca.miniproject.friend.entity.Status;
 import com.ureca.miniproject.friend.service.response.InviteFriendResponse;
+import com.ureca.miniproject.friend.service.response.ListFriendResponse;
 import com.ureca.miniproject.friend.service.response.ListFriendStatusResponse;
 import com.ureca.miniproject.friend.service.response.UpdateFriendResponse;
 
@@ -15,6 +15,8 @@ public interface FriendService {
 	UpdateFriendResponse updateFriend(UpdateFriendRequest updateFriendRequest);
 
 	ListFriendStatusResponse listFriendStatus(Status statusDesired);
-	ListFriendStatusResponse listFriend();
+	ListFriendResponse listFriend();
+
+	Boolean deleteFriend(String emailToDelete);
 
 }

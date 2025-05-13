@@ -4,8 +4,8 @@ package com.ureca.miniproject.chat.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,7 +71,8 @@ public class StateManager {
                         "남은 시간: " + remaining / 1000 + "초",
                         ChatMessage.MessageType.TALK,
                         null,
-                        baseMessage.getParticipants()
+                        baseMessage.getParticipants(),
+                        UUID.randomUUID().toString()
                 ));
             }
         }, 0, 1, TimeUnit.SECONDS);

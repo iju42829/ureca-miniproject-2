@@ -5,6 +5,7 @@ import static com.ureca.miniproject.common.BaseCode.FRIEND_LIST_SUCCESS;
 import static com.ureca.miniproject.common.BaseCode.FRIEND_UPDATE_SUCCESS;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,6 +20,7 @@ import com.ureca.miniproject.friend.controller.request.UpdateFriendRequest;
 import com.ureca.miniproject.friend.entity.Status;
 import com.ureca.miniproject.friend.service.FriendService;
 import com.ureca.miniproject.friend.service.response.InviteFriendResponse;
+import com.ureca.miniproject.friend.service.response.ListFriendResponse;
 import com.ureca.miniproject.friend.service.response.ListFriendStatusResponse;
 import com.ureca.miniproject.friend.service.response.UpdateFriendResponse;
 
@@ -48,21 +50,28 @@ public class FriendController {
 
 	@GetMapping("/friend/status")
 	public ResponseEntity<ApiResponse<ListFriendStatusResponse>> getFriendsOtherStatus(@RequestParam("statusDesired") String statusDesired){
-		Status statusDesiredReal = Status.valueOf(statusDesired);
-		System.out.println(statusDesiredReal);
-		ListFriendStatusResponse listFriendResponse = friendService.listFriendStatus(statusDesiredReal);
+		Status statusDesiredReal = Status.valueOf(statusDesired);		
+		ListFriendStatusResponse listFriendStatusResponse = friendService.listFriendStatus(statusDesiredReal);
+		
+		return ResponseEntity.ok(ApiResponse
+				.of(FRIEND_LIST_SUCCESS,listFriendStatusResponse ));
+	}
+	
+
+	@GetMapping("/friend")
+	public ResponseEntity<ApiResponse<ListFriendResponse>> getFriends(){				
+		ListFriendResponse listFriendResponse = friendService.listFriend();
 		
 		return ResponseEntity.ok(ApiResponse
 				.of(FRIEND_LIST_SUCCESS,listFriendResponse ));
 	}
 	
-
-//	@GetMapping("/friend")
-//	public ResponseEntity<ApiResponse<ListFriendStatusResponse>> getFriends(){				
-//		ListFriendStatusResponse listFriendResponse = friendService.listFriend();
-//		
-//		return ResponseEntity.ok(ApiResponse
-//				.of(FRIEND_LIST_SUCCESS,listFriendResponse ));
-//	}
+	@DeleteMapping("/friend")
+	public ResponseEntity<ApiResponse<Boolean>> getFriends(@RequestParam("emailToDelete") String emailToDelete){
+		Boolean result = friendService.deleteFriend(emailToDelete);
+		//todo : boolean도 보낼 필요 없고, response entity status만 보내도 됨
+		return ResponseEntity.ok(ApiResponse
+				.of(FRIEND_LIST_SUCCESS,result ));
+	}
 		
 }

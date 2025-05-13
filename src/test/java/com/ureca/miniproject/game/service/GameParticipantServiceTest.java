@@ -117,6 +117,7 @@ class GameParticipantServiceTest {
     }
 
     @Test
+    @DisplayName("참가 중인 유저가 존재하면 해당 게임방 ID를 반환한다.")
     void checkParticipant() {
         // given
         User user = User.builder()
@@ -148,6 +149,7 @@ class GameParticipantServiceTest {
     }
 
     @Test
+    @DisplayName("참가 중인 유저가 없으면 null을 반환한다.")
     void checkParticipantNotFoundGameParticipant() {
         // given
         User user1 = User.builder()
@@ -188,7 +190,7 @@ class GameParticipantServiceTest {
     }
 
     @Test
-    @DisplayName("")
+    @DisplayName("존재하지 않는 유저일 경우 예외가 발생한다.")
     void checkParticipantNotFoundUser() {
         // given
         MyUserDetails myUserDetails = new MyUserDetails("test1", null, "test1@test.com", null);

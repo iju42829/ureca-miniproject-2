@@ -11,5 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter@Setter
 public class ListFriendResponse {	
+
 	public List<User> friendList;
+
 }

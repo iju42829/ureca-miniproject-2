@@ -12,9 +12,12 @@ import com.ureca.miniproject.friend.entity.Status;
 
 
 
+
+
 @Repository
 public interface FriendRepository extends JpaRepository<Friend, FriendId> {
 	//crud 생성 완료
+
 
 	Boolean existsByFriendIdAndStatus(FriendId friendId,Status status);
 	Boolean existsByFriendIdInviteeIdAndStatus(Long id,Status status);

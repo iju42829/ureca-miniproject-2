@@ -45,6 +45,7 @@ public class FriendController {
 				.of(FRIEND_UPDATE_SUCCESS,updateFriendResponse ));
 	}
 	
+
 	@GetMapping("/friend/status")
 	public ResponseEntity<ApiResponse<ListFriendStatusResponse>> getFriendsOtherStatus(@RequestParam("statusDesired") String statusDesired){
 		Status statusDesiredReal = Status.valueOf(statusDesired);
@@ -55,6 +56,7 @@ public class FriendController {
 				.of(FRIEND_LIST_SUCCESS,listFriendResponse ));
 	}
 	
+
 //	@GetMapping("/friend")
 //	public ResponseEntity<ApiResponse<ListFriendStatusResponse>> getFriends(){				
 //		ListFriendStatusResponse listFriendResponse = friendService.listFriend();

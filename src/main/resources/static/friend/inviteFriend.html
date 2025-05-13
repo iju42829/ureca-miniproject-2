@@ -27,14 +27,17 @@
     <div id="inviteListContainer"></div>
 
 
+
 	<h2>친구 목록</h2>
 	<div id="friendListContainer"></div>
+
 
 
 
     <script>
 
 	    function loadFriendRequests() {
+
 			//waiting 중인 친구 요청 list up	    
 			const statusDesired = 'WAITING'; 
 	        $.ajax({
@@ -46,6 +49,7 @@
                     const container = $('#inviteListContainer');
                     container.empty();
 					console.log(inviteList)
+
                     if ( inviteList.length === 0) {
                         container.append('<p>받은 친구 요청이 없습니다.</p>');
                         return;
@@ -57,6 +61,7 @@
                         const status = friend.status;
 
                         const item = `
+
                             <div class="invite-item">
                                 <p>보낸 사람: ${inviterName} (${inviterEmail}) - 상태: ${status}</p>
                                 <button class="accept-btn" data-email="${inviterEmail}">수락</button>
@@ -71,6 +76,7 @@
                 }
 
 	        });
+
 	        
 	     // 친구 요청 거절
 	        $(document).on('click', '.decline-btn', function () {
@@ -137,6 +143,7 @@
             .then(data => {
                 $('#_csrf').val(data.token); // CSRF 토큰 값 설정
             });
+
 
 
             let loggedInEmail = '';

@@ -6,7 +6,6 @@ import static com.ureca.miniproject.common.BaseCode.USER_NOT_FOUND;
 import static com.ureca.miniproject.friend.entity.Status.ACCEPTED;
 import static com.ureca.miniproject.friend.entity.Status.WAITING;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.security.core.Authentication;
@@ -75,6 +74,7 @@ public class FriendServiceImpl implements FriendService {
 				);		
 		friendRepository.flush();			
 
+
 		return new InviteFriendResponse(friend.getFriendId().getInvitee().getUserName(), friend.getFriendId().getInviter().getUserName());
 	}
 	
@@ -96,6 +96,7 @@ public class FriendServiceImpl implements FriendService {
 		userRepository.flush();
 		
 		
+
 		FriendId friendId1 = FriendId.builder().invitee(invitee).inviter(inviter).build();		
 		
 		Status beforeStatus = friendRepository.findById(friendId1).get().getStatus();
@@ -105,13 +106,14 @@ public class FriendServiceImpl implements FriendService {
 						  .friendId(friendId1)
 						  .status(updateFriendRequest.getStatusDesired())						  
 						  .build()
-				);
-			
+				);		
+		
 		Status afterStatus = friendRepository.findById(friendId1).get().getStatus();
 		return new UpdateFriendResponse(beforeStatus,afterStatus );
 	}
 
 	@Override
+
 	public ListFriendStatusResponse listFriendStatus(Status statusDesired) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
@@ -123,6 +125,7 @@ public class FriendServiceImpl implements FriendService {
 		for(Friend friend : friends) {
 			System.out.println("id" + friend.getFriendId().getInviter().getEmail());
 		}
+
 		return new ListFriendStatusResponse(friends);
 	}
 
@@ -161,6 +164,7 @@ public class FriendServiceImpl implements FriendService {
 //		}
 //		return new ListFriendStatusResponse(friends);
 //	}
+
 	
 	
 	

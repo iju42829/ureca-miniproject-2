@@ -1,5 +1,8 @@
 package com.ureca.miniproject.chat.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -22,6 +25,7 @@ public class StateManager {
 
     private final Map<String, GameState> roomStates = new ConcurrentHashMap<>();
     private final Map<String, Long> debateStartTimes = new ConcurrentHashMap<>();
+    private final Map<String, List<ChatMessage>> chatHistories = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static final long DEBATE_DURATION = 120_000;
@@ -30,11 +34,13 @@ public class StateManager {
         long startTime = System.currentTimeMillis();
         roomStates.put(roomId, GameState.DEBATING);
         debateStartTimes.put(roomId, startTime);
+
         baseMessage.setStartTime(startTime);
         baseMessage.setMessage("토론을 시작합니다.");
         baseMessage.setType(ChatMessage.MessageType.START_TIME);
 
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, baseMessage);
+        saveChat(roomId, baseMessage); // 기록 저장
 
         scheduler.scheduleAtFixedRate(() -> {
             if (roomStates.get(roomId) != GameState.DEBATING) return;
@@ -43,14 +49,15 @@ public class StateManager {
             if (remaining <= 0) {
                 endDebate(roomId, baseMessage);
             } else {
-                messagingTemplate.convertAndSend("/topic/chat/" + roomId, new ChatMessage(
-                        roomId,
-                        "SYSTEM",
-                        "남은 시간: " + remaining / 1000 + "초",
-                        ChatMessage.MessageType.TALK,
-                        null,
-                        baseMessage.getParticipants()
-                ));
+                ChatMessage msg = new ChatMessage();
+                msg.setRoomId(roomId);
+                msg.setSender("SYSTEM");
+                msg.setMessage("남은 시간: " + remaining / 1000 + "초");
+                msg.setType(ChatMessage.MessageType.TALK);
+                msg.setParticipants(baseMessage.getParticipants());
+
+                messagingTemplate.convertAndSend("/topic/chat/" + roomId, msg);
+                saveChat(roomId, msg);
             }
         }, 0, 1, TimeUnit.SECONDS);
     }
@@ -67,6 +74,15 @@ public class StateManager {
         endMessage.setParticipants(baseMessage.getParticipants());
 
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, endMessage);
+        saveChat(roomId, endMessage);
+    }
+
+    public void saveChat(String roomId, ChatMessage message) {
+        chatHistories.computeIfAbsent(roomId, k -> new ArrayList<>()).add(message);
+    }
+
+    public List<ChatMessage> getChatHistory(String roomId) {
+        return chatHistories.getOrDefault(roomId, Collections.emptyList());
     }
 
     public long getRemainingTime(String roomId) {
@@ -75,11 +91,11 @@ public class StateManager {
         return Math.max(0, DEBATE_DURATION - (System.currentTimeMillis() - start));
     }
 
+    public Long getStartTime(String roomId) {
+        return debateStartTimes.get(roomId);
+    }
+
     public GameState getGameState(String roomId) {
         return roomStates.getOrDefault(roomId, GameState.WAITING);
     }
-
-	public Long getStartTime(String roomId) {
-		return debateStartTimes.get(roomId);
-	}
 }

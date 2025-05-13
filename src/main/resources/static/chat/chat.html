@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let debateEndTime = null;
     let latestParticipants = [];
     let sender = null;
-
+	
     const socket = new SockJS("/ws/chat");
     const stompClient = Stomp.over(socket);
 
@@ -88,14 +88,30 @@ document.addEventListener("DOMContentLoaded", () => {
 		
 		        timerDiv.style.visibility = "visible";
     });
-
+    function loadChatHistory() {
+        fetch(`/api/state/${roomId}/messages`)
+            .then(res => res.json())
+            .then(messages => {
+                messages.forEach(msg => {
+                    if (msg.type === "TALK") {
+                        if (msg.sender === "SYSTEM") return;
+                        const isMe = msg.sender === sender;
+                        displayMessage(msg.sender, msg.message, isMe);
+                    } else if (msg.type === "ENTER" || msg.type === "LEAVE") {
+                        displayNotice(msg.message);
+                    } else if (msg.type === "START_TIME" || msg.type === "END_TIME") {
+                        displayNotice(msg.message);
+                    }
+                });
+            });
+    }
 
 
     stompClient.connect({}, () => {
         stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
             const data = JSON.parse(msg.body);
             console.log("수신 메시지:", data);
-
+			
 
             if (data.type === "TALK") {
                 if (data.message?.startsWith("남은 시간:")) {
@@ -110,7 +126,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 displayMessage(data.sender, data.message, isMe);
 
             } else if (data.type === "ENTER" || data.type === "LEAVE") {
-                sender = data.sender;
+            	sender = data.sender;
+            	loadChatHistory();
                 const action = data.type === "ENTER" ? "입장하셨습니다" : "퇴장하셨습니다";
                 const nickname = data.sender || "알 수 없음";
                 const message = data.message && data.message.trim() !== ""
@@ -291,6 +308,14 @@ document.addEventListener("DOMContentLoaded", () => {
     window.endTimerNow = endTimerNow;
     window.startDebate = startDebate;
     window.toggleRulebook = toggleRulebook;
+    
+    document.getElementById("message").addEventListener("keydown", function(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault(); 
+            sendMessage();         
+        }
+    });
+
 });
 </script>
 

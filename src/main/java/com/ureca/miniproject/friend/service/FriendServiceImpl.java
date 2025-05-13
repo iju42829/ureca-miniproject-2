@@ -57,6 +57,7 @@ public class FriendServiceImpl implements FriendService {
 		
 		if(inviter.getEmail().equals(invitee.getEmail())) {
 			throw new InviteSelfException(INVITE_SELF_DECLINED);
+
 		}
 		
 		
@@ -128,6 +129,7 @@ public class FriendServiceImpl implements FriendService {
 	public ListFriendStatusResponse listFriendStatus(Status statusDesired) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
+
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();
 		//user가 inviter 거나, invitee인 두가지 상황을 가져오는게 아니라, user가 invitee인 상황만
 		List<Friend> friends = friendRepository.findByUserIdAndStatus(user.getId(),statusDesired);						
@@ -143,6 +145,7 @@ public class FriendServiceImpl implements FriendService {
 		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();		
 		
 		//일단 login된 user가 invitee이든, inviter이든 상관없이 가져오기
+
 		List<Friend> friendInfos = friendRepository.findFriendsByUserIdAndStatus(me.getId(),Status.ACCEPTED);
 		//본인이 invitee가 아닌것
 		List<User> friends = new ArrayList<User>(); 
@@ -181,6 +184,7 @@ public class FriendServiceImpl implements FriendService {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();
+
 		List<Friend> friendInfos = friendRepository.findFriends(user.getEmail(), emailToDelete);
 
 		try {

@@ -3,6 +3,10 @@
 .message-content {
 	white-space: pre-wrap;
 }
+.dead {
+    color: gray;
+    text-decoration: line-through;
+}
 
 .notice {
 	text-align: center;

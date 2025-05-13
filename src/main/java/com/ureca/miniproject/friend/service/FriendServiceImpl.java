@@ -5,6 +5,7 @@ import static com.ureca.miniproject.common.BaseCode.INVITE_ALREADY_EXIST;
 import static com.ureca.miniproject.common.BaseCode.INVITE_SELF_DECLINED;
 import static com.ureca.miniproject.common.BaseCode.USER_NOT_FOUND;
 import static com.ureca.miniproject.friend.entity.Status.ACCEPTED;
+import static com.ureca.miniproject.friend.entity.Status.DECLINED;
 import static com.ureca.miniproject.friend.entity.Status.WAITING;
 
 import java.util.ArrayList;
@@ -60,21 +61,25 @@ public class FriendServiceImpl implements FriendService {
 		
 		
 		FriendId friendId = FriendId.builder().invitee(invitee).inviter(inviter).build();
-		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();	
+		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();	
 			//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw
-		if(friendRepository.existsByFriendIdInviteeIdAndStatus(me.getId(),WAITING) ||
-		   friendRepository.existsByFriendIdInviteeIdAndStatus(me.getId(),ACCEPTED)||
-		   friendRepository.existsByFriendIdInviterIdAndStatus(me.getId(),ACCEPTED)|| 
-		   friendRepository.existsByFriendIdInviterIdAndStatus(me.getId(),WAITING) || 
-		   //상호추가 방지
-		   //본인이 invitee로 되어 있고, waiting인 상태의 friend가 있으면  throw
-		   friendRepository.existsByFriendIdInviteeIdAndStatus(me.getId(), Status.WAITING)
-			) {
+			//상호추가 방지
+		   	//본인이 invitee로 되어 있고, waiting인 상태의 friend가 있으면  throw
+//		if(friendRepository.existsByFriendIdInviteeIdAndStatus(user.getId(),WAITING) ||
+////		   friendRepository.existsByFriendIdInviteeIdAndStatus(me.getId(),ACCEPTED)||		   
+////		   friendRepository.existsByFriendIdInviterIdAndStatus(me.getId(),ACCEPTED)||  //-> 이건데...35와 34사이에 accept 된거를 잡아내서 35에서 33으로 신청하는 것도 막힘. 즉, 상대방의 id를 고려해야하는데,,본인만 고려. 중복된거 처리 같은 경우도 양측다 고려를 해야함/
+//		   friendRepository.existsByFriendIdInviterIdAndStatus(user.getId(),WAITING)){
+//			throw new InviteAlreadyExistException(INVITE_ALREADY_EXIST);
+//		}
+		
+		//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw
+		//상호추가 방지
+	   	//본인이 invitee로 되어 있고, waiting인 상태의 friend가 있으면  throw
+		System.out.println(friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED));
+		if(!friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), WAITING).isEmpty() ||
+		   !friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED).isEmpty() ){
 			throw new InviteAlreadyExistException(INVITE_ALREADY_EXIST);
 		}
-		
-		
-		
 
 		Friend friend = friendRepository.save(
 						Friend.builder()
@@ -91,9 +96,7 @@ public class FriendServiceImpl implements FriendService {
 
 	@Override
 	public UpdateFriendResponse updateFriend(UpdateFriendRequest updateFriendRequest) {
-		
-		
-		
+
 		User inviter = userRepository.findByEmail(updateFriendRequest.getInviterEmail())
 	            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));						
 		userRepository.save(inviter);		
@@ -101,24 +104,22 @@ public class FriendServiceImpl implements FriendService {
 		
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();			
-		User invitee = userRepository.findByEmail(myUserDetails.getEmail()).orElseThrow();		
-		userRepository.save(invitee);
+		User user = userRepository.findByEmail(myUserDetails.getEmail()).orElseThrow();		
+		userRepository.save(user);
 		userRepository.flush();
-		
-		
 
-		FriendId friendId1 = FriendId.builder().invitee(invitee).inviter(inviter).build();		
+		FriendId friendId = FriendId.builder().invitee(user).inviter(inviter).build();		
 		
-		Status beforeStatus = friendRepository.findById(friendId1).get().getStatus();
+		Status beforeStatus = friendRepository.findById(friendId).get().getStatus();
 		
 		friendRepository.save(
 					Friend.builder()
-						  .friendId(friendId1)
+						  .friendId(friendId)
 						  .status(updateFriendRequest.getStatusDesired())						  
 						  .build()
 				);		
 		
-		Status afterStatus = friendRepository.findById(friendId1).get().getStatus();
+		Status afterStatus = friendRepository.findById(friendId).get().getStatus();
 		return new UpdateFriendResponse(beforeStatus,afterStatus );
 	}
 
@@ -127,8 +128,9 @@ public class FriendServiceImpl implements FriendService {
 	public ListFriendStatusResponse listFriendStatus(Status statusDesired) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
-		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();			
-		List<Friend> friends = friendRepository.findByUserIdAndStatus(me.getId(),statusDesired);						
+		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();
+		//user가 inviter 거나, invitee인 두가지 상황을 가져오는게 아니라, user가 invitee인 상황만
+		List<Friend> friends = friendRepository.findByUserIdAndStatus(user.getId(),statusDesired);						
 		
 		return new ListFriendStatusResponse(friends);
 	}
@@ -141,7 +143,7 @@ public class FriendServiceImpl implements FriendService {
 		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();		
 		
 		//일단 login된 user가 invitee이든, inviter이든 상관없이 가져오기
-		List<Friend> friendInfos = friendRepository.findByUserIdAndStatus(me.getId(),Status.ACCEPTED);
+		List<Friend> friendInfos = friendRepository.findFriendsByUserIdAndStatus(me.getId(),Status.ACCEPTED);
 		//본인이 invitee가 아닌것
 		List<User> friends = new ArrayList<User>(); 
 		for(Friend friendInfo : friendInfos) {
@@ -179,7 +181,7 @@ public class FriendServiceImpl implements FriendService {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();
-		List<Friend> friendInfos = friendRepository.findByUserEmailAndParamEmail(user.getEmail(), emailToDelete);
+		List<Friend> friendInfos = friendRepository.findFriends(user.getEmail(), emailToDelete);
 
 		try {
 			friendInfos.forEach(friend -> {

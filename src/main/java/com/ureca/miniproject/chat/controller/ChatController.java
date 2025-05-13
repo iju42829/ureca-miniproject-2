@@ -20,7 +20,7 @@ public class ChatController {
 
     private final ChatRoomUserTool userRepo;
     private final StateManager stateManager;
-    
+
     @MessageMapping("/chat.send/{roomId}")
     @SendTo("/topic/chat/{roomId}")
     public ChatMessage send(@Payload ChatMessage message, @DestinationVariable("roomId") String roomId, Principal principal) {

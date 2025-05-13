@@ -3,8 +3,10 @@ package com.ureca.miniproject.friend.service;
 
 import static com.ureca.miniproject.common.BaseCode.INVITE_ALREADY_EXIST;
 import static com.ureca.miniproject.common.BaseCode.USER_NOT_FOUND;
+import static com.ureca.miniproject.friend.entity.Status.ACCEPTED;
 import static com.ureca.miniproject.friend.entity.Status.WAITING;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.security.core.Authentication;
@@ -21,7 +23,7 @@ import com.ureca.miniproject.friend.exception.InviteAlreadyExistException;
 import com.ureca.miniproject.friend.exception.UserNotFoundException;
 import com.ureca.miniproject.friend.repository.FriendRepository;
 import com.ureca.miniproject.friend.service.response.InviteFriendResponse;
-import com.ureca.miniproject.friend.service.response.ListFriendResponse;
+import com.ureca.miniproject.friend.service.response.ListFriendStatusResponse;
 import com.ureca.miniproject.friend.service.response.UpdateFriendResponse;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.repository.UserRepository;
@@ -51,34 +53,29 @@ public class FriendServiceImpl implements FriendService {
 		userRepository.save(inviter);
 		userRepository.flush();
 		
-		FriendId friendId1 = FriendId.builder().invitee(invitee).inviter(inviter).build();
-		if(friendRepository.existsByFriendId(friendId1)) {
+		FriendId friendId = FriendId.builder().invitee(invitee).inviter(inviter).build();
+		if(friendRepository.existsByFriendIdAndStatus(friendId,WAITING) ||
+		   friendRepository.existsByFriendIdAndStatus(friendId,ACCEPTED)
+			) {
 			throw new InviteAlreadyExistException(INVITE_ALREADY_EXIST);
 		}
 		
-		FriendId friendId2 = FriendId.builder().invitee(inviter).inviter(invitee).build();
-		if(friendRepository.existsByFriendId(friendId2)) {
+		//상호추가 방지
+		//본인이 invitee로 되어 있고, waiting인 상태의 friend가 있으면  throw
+		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();	
+		if(friendRepository.existsByFriendIdInviteeIdAndStatus(me.getId(), Status.WAITING)) {
 			throw new InviteAlreadyExistException(INVITE_ALREADY_EXIST);
 		}
-		
-		Friend friend1 = friendRepository.save(
+
+		Friend friend = friendRepository.save(
 						Friend.builder()
-							.friendId(friendId1)
+							.friendId(friendId)
 							.status(WAITING)
 							.build()				
-				);
-		friendRepository.flush();
-		Friend friend2 = friendRepository.save(
-				Friend.builder()
-				.friendId(friendId2)
-				.status(WAITING)
-				.build()				
-				);
-		
-		friendRepository.flush();
+				);		
+		friendRepository.flush();			
 
-			
-		return new InviteFriendResponse(friend1.getFriendId().getInvitee().getUserName(), friend1.getFriendId().getInviter().getUserName());
+		return new InviteFriendResponse(friend.getFriendId().getInvitee().getUserName(), friend.getFriendId().getInviter().getUserName());
 	}
 	
 
@@ -99,9 +96,7 @@ public class FriendServiceImpl implements FriendService {
 		userRepository.flush();
 		
 		
-		FriendId friendId1 = FriendId.builder().invitee(invitee).inviter(inviter).build();
-		FriendId friendId2 = FriendId.builder().invitee(inviter).inviter(invitee).build();
-		
+		FriendId friendId1 = FriendId.builder().invitee(invitee).inviter(inviter).build();		
 		
 		Status beforeStatus = friendRepository.findById(friendId1).get().getStatus();
 		
@@ -111,32 +106,61 @@ public class FriendServiceImpl implements FriendService {
 						  .status(updateFriendRequest.getStatusDesired())						  
 						  .build()
 				);
-		
-		friendRepository.save(
-				Friend.builder()
-				.friendId(friendId2)
-				.status(updateFriendRequest.getStatusDesired())						  
-				.build()
-				);
-		
+			
 		Status afterStatus = friendRepository.findById(friendId1).get().getStatus();
 		return new UpdateFriendResponse(beforeStatus,afterStatus );
 	}
 
 	@Override
-	public ListFriendResponse listFriend() {
+	public ListFriendStatusResponse listFriendStatus(Status statusDesired) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
-		User invitee = userRepository.findByEmail(myUserDetails.getEmail()).get();		
-		System.out.println(invitee.getId());
-		List<Friend> friends = friendRepository.findByFriendIdInviteeId(invitee.getId());
+		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();		
+		System.out.println(me.getId());
+		List<Friend> friends = friendRepository.findByFriendIdInviteeIdOrFriendIdInviterIdAndStatus(me.getId(),me.getId(),statusDesired);
 		
 		
 		for(Friend friend : friends) {
 			System.out.println("id" + friend.getFriendId().getInviter().getEmail());
 		}
-		return new ListFriendResponse(friends);
+		return new ListFriendStatusResponse(friends);
 	}
+
+
+	@Override
+	public ListFriendStatusResponse listFriend() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+//	@Override
+//	public ListFriendStatusResponse listFriend() {
+//		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
+//		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();		
+//		
+//		//일단 login된 user가 invitee이든, inviter이든 상관없이 가져오기
+//		List<Friend> friendInfos = friendRepository.findByFriendIdInviteeIdOrFriendIdInviterIdAndStatus(me.getId(),me.getId(),Status.ACCEPTED);
+//		//본인이 invitee가 아닌것
+//		List<User> friends = new ArrayList<User>(); 
+//		for(Friend friendInfo : friendInfos) {
+//			//본인이 inviter면 invitee를 추가, invitee면 inviter를 추가
+//			String myEmail = me.getEmail();
+//			String inviteeEmail = friendInfo.getFriendId().getInvitee().getEmail();
+//			String inviterEmail = friendInfo.getFriendId().getInviter().getEmail();
+//			if(myEmail.equals( inviteeEmail)) {
+//				
+//			}else if(myEmail.equals(inviterEmail)){
+//				
+//			}else {
+//				throw new 
+//			}
+//				
+////			System.out.println("id" + friend.getFriendId().getInviter().getEmail());
+//		}
+//		return new ListFriendStatusResponse(friends);
+//	}
 	
 	
 	

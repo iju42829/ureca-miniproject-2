@@ -6,5 +6,5 @@ import lombok.Data;
 
 @Data
 public class ListFriendRequest {	
-	private String inviteeEmail;		
+	private Status statusDesired;		
 }

@@ -30,4 +30,8 @@ public class ChatRoomUserTool {
     public List<String> getUsers(String roomId) {
         return new ArrayList<>(roomUsers.getOrDefault(roomId, Collections.emptySet()));
     }
+    public boolean isUserInRoom(String roomId, String username) {
+        return roomUsers.getOrDefault(roomId, Collections.emptySet()).contains(username);
+    }
+
 }

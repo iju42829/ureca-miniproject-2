@@ -61,6 +61,7 @@ public class FriendServiceImpl implements FriendService {
 		
 		
 		FriendId friendId = FriendId.builder().invitee(invitee).inviter(inviter).build();
+
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();	
 			//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw
 			//상호추가 방지
@@ -78,8 +79,12 @@ public class FriendServiceImpl implements FriendService {
 		System.out.println(friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED));
 		if(!friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), WAITING).isEmpty() ||
 		   !friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED).isEmpty() ){
+
 			throw new InviteAlreadyExistException(INVITE_ALREADY_EXIST);
 		}
+		
+		
+		
 
 		Friend friend = friendRepository.save(
 						Friend.builder()
@@ -128,9 +133,11 @@ public class FriendServiceImpl implements FriendService {
 	public ListFriendStatusResponse listFriendStatus(Status statusDesired) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
+
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();
 		//user가 inviter 거나, invitee인 두가지 상황을 가져오는게 아니라, user가 invitee인 상황만
 		List<Friend> friends = friendRepository.findByUserIdAndStatus(user.getId(),statusDesired);						
+
 		
 		return new ListFriendStatusResponse(friends);
 	}
@@ -143,7 +150,9 @@ public class FriendServiceImpl implements FriendService {
 		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();		
 		
 		//일단 login된 user가 invitee이든, inviter이든 상관없이 가져오기
+
 		List<Friend> friendInfos = friendRepository.findFriendsByUserIdAndStatus(me.getId(),Status.ACCEPTED);
+
 		//본인이 invitee가 아닌것
 		List<User> friends = new ArrayList<User>(); 
 		for(Friend friendInfo : friendInfos) {
@@ -181,6 +190,7 @@ public class FriendServiceImpl implements FriendService {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();
+
 		List<Friend> friendInfos = friendRepository.findFriends(user.getEmail(), emailToDelete);
 
 		try {

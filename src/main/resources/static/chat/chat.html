@@ -62,23 +62,73 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         roomId = parseInt(roomId);
     }
+    let sender = null;
+    async function fetchSender() {
+        try {
+            const res = await fetch("/api/user/me", { credentials: "same-origin" });
+            const json = await res.json();
+            return json.data.userName;
+        } catch (err) {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login.html";
+        }
+    }
 
-
-    
     let debateTimer = null;
     let debateEndTime = null;
     let latestParticipants = [];
-    let sender = null;
+    initializeWebSocket()
+    loadChatHistory();
 
+    async function initializeWebSocket() {
+    	sender = await fetchSender();
+    	console.log(sender);
+        const socket = new SockJS("/ws/chat");
+        stompClient = Stomp.over(socket);
 
-    
-    let debateTimer = null;
-    let debateEndTime = null;
-    let latestParticipants = [];
-    let sender = null;
+        stompClient.connect({}, () => {
+            stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
+                const data = JSON.parse(msg.body);
+
+                if (data.type === "TALK") {
+                    if (data.message?.startsWith("남은 시간:")) {
+                        const remaining = data.message.match(/\d+/);
+                        if (remaining) timeSpan.textContent = remaining[0];
+                        return;
+                    }
+                    displayMessage(data.sender, data.message, data.sender === sender);
+
+                } else if (data.type === "ENTER" || data.type === "LEAVE") {
+                    displayNotice(data);
+                } else if (data.type === "END_TIME") {
+                    displayNotice(data);
+                    clearInterval(debateTimer);
+                    timeSpan.textContent = "0";
+                    document.getElementById("end-timer-btn").disabled = true;
+                    showVoteModal(latestParticipants);
+                } else if (data.type === "START_TIME") {
+                    displayNotice(data);
+                    handleStartTime(data.startTime);
+                } else if (data.type === "VOTE_RESULT") {
+                    displayNotice(data.decided
+                        ? `${data.target}님이 과반수 득표로 지목되었습니다.`
+                        : "투표가 진행 중입니다...");
+                }
+
+                if (data.participants) updateParticipantList(data.participants);
+            });
+
+            stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
+                roomId: roomId,
+                sender: sender,
+                message: "",
+                type: "ENTER"
+            }));
+        });
+    }
+
 	
-    const socket = new SockJS("/ws/chat");
-    const stompClient = Stomp.over(socket);
+    
 
     const timeSpan = document.getElementById("time");
     const timerDiv = document.getElementById("timer");
@@ -86,8 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
     fetch(`/api/state/${roomId}/time-left`)
 	    .then(res => res.json())
 		    .then(data => {
-		        console.log(data);
-		
 		        if (data.startTime) {
 		            handleStartTime(data.startTime);
 		        } else {
@@ -97,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		        timerDiv.style.visibility = "visible";
     });
 
-    function loadChatHistory() {
+    async function loadChatHistory() {
         fetch(`/api/state/${roomId}/messages`)
             .then(res => res.json())
             .then(messages => {
@@ -117,67 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-    stompClient.connect({}, () => {
-        stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
-            const data = JSON.parse(msg.body);
-            console.log("수신 메시지:", data);
-			
-
-
-            if (data.type === "TALK") {
-                if (data.message?.startsWith("남은 시간:")) {
-                    const remaining = data.message.match(/\d+/);
-                    if (remaining) {
-                        timeSpan.textContent = remaining[0];
-                    }
-                    return;
-                }
-
-                const isMe = data.sender === sender;
-                displayMessage(data.sender, data.message, isMe);
-
-            } else if (data.type === "ENTER" || data.type === "LEAVE") {
-
-            	  sender = data.sender;
-            	  loadChatHistory();
-
-                const action = data.type === "ENTER" ? "입장하셨습니다" : "퇴장하셨습니다";
-                const nickname = data.sender || "알 수 없음";
-                const message = data.message && data.message.trim() !== ""
-                    ? data.message
-                    : `${nickname}님이 ${action}`;
-                displayNotice(message);
-
-            } else if (data.type === "END_TIME") {
-                displayNotice(data.message);
-                clearInterval(debateTimer);
-                timeSpan.textContent = "0";
-                document.getElementById("end-timer-btn").disabled = true;
-                showVoteModal(latestParticipants);
-
-            } else if (data.type === "START_TIME") {
-                displayNotice(data.message);
-                handleStartTime(data.startTime);
-
-            } else if (data.type === "VOTE_RESULT") {
-                if (data.decided) {
-                    displayNotice(`${data.target}님이 과반수 득표로 지목되었습니다.`);
-                } else {
-                    displayNotice("투표가 진행 중입니다...");
-                }
-            }
-
-            if (data.participants) {
-                updateParticipantList(data.participants);
-            }
-        });
-
-        stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
-            roomId: roomId,
-            message: "",
-            type: "ENTER"
-        }));
-    });
+    
 
     window.addEventListener("beforeunload", () => {
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
@@ -232,12 +220,18 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function displayNotice(message) {
-        if (!message || message.trim() === "") return;
+    const displayedMessageIds = new Set();
+
+    function displayNotice(messageObj) {
+        if (!messageObj || !messageObj.message || displayedMessageIds.has(messageObj.id)) return;
+        console.log("sss");
+		console.log(displayedMessageIds);
+        displayedMessageIds.add(messageObj.id);
+
         const chatBox = document.getElementById("chat-box");
         const msgDiv = document.createElement("div");
         msgDiv.className = "notice";
-        msgDiv.innerHTML = `<div class="message-notice">${message}</div>`;
+        msgDiv.innerHTML = `<div class="message-notice">${messageObj.message}</div>`;
         chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     }

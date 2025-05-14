@@ -50,5 +50,9 @@ public class GameStateController {
     public ResponseEntity<List<ChatMessage>> getMessages(@PathVariable("roomId") String roomId) {
         return ResponseEntity.ok(stateManager.getChatHistory(roomId));
     }
+    @GetMapping("/{roomId}/dead-users")
+    public ResponseEntity<List<String>> getDeadUsers(@PathVariable("roomId") String roomId) {
+        return ResponseEntity.ok(stateManager.getDeadUsers(roomId));
+    }
 
 }

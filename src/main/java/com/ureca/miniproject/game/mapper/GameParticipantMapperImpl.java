@@ -1,6 +1,7 @@
 package com.ureca.miniproject.game.mapper;
 
 import com.ureca.miniproject.game.entity.GameParticipant;
+import com.ureca.miniproject.game.service.response.DetailGameParticipantResponse;
 import com.ureca.miniproject.game.service.response.GameParticipantResponse;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,19 @@ public class GameParticipantMapperImpl implements GameParticipantMapper {
                 .name(gameParticipant.getUser().getUserName())
                 .status(gameParticipant.getStatus().name())
                 .isAlive(gameParticipant.getIsAlive())
+                .build();
+    }
+
+    @Override
+    public DetailGameParticipantResponse toDetailGameParticipantResponse(GameParticipant gameParticipant) {
+        if (gameParticipant == null) { return null; }
+
+        return DetailGameParticipantResponse.builder()
+                .id(gameParticipant.getUser().getId())
+                .name(gameParticipant.getUser().getUserName())
+                .status(gameParticipant.getStatus().name())
+                .isAlive(gameParticipant.getIsAlive())
+                .role(gameParticipant.getRole().name())
                 .build();
     }
 }

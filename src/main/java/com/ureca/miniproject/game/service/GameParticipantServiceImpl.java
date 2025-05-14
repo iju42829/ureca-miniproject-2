@@ -7,6 +7,7 @@ import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
 import com.ureca.miniproject.game.mapper.GameParticipantMapper;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
+import com.ureca.miniproject.game.service.response.DetailGameParticipantResponse;
 import com.ureca.miniproject.game.service.response.ParticipantCheckResponse;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.exception.UserNotFoundException;
@@ -14,6 +15,8 @@ import com.ureca.miniproject.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static com.ureca.miniproject.common.BaseCode.GAME_ROOM_NOT_FOUND;
 import static com.ureca.miniproject.common.BaseCode.USER_NOT_FOUND;
@@ -63,5 +66,12 @@ public class GameParticipantServiceImpl implements GameParticipantService {
         }
 
         return new ParticipantCheckResponse(joinedParticipant.getGameRoom().getId());
+    }
+
+    @Override
+    public List<DetailGameParticipantResponse> getDetailGameParticipant(Long roomId) {
+        return gameParticipantRepository.findAllByGameRoom_Id(roomId).stream()
+                .map(gameParticipantMapper::toDetailGameParticipantResponse)
+                .toList();
     }
 }

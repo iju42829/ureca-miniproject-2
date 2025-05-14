@@ -3,6 +3,7 @@ package com.ureca.miniproject.game.controller;
 import com.ureca.miniproject.common.ApiResponse;
 import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.game.service.GameParticipantService;
+import com.ureca.miniproject.game.service.response.DetailGameParticipantResponse;
 import com.ureca.miniproject.game.service.response.ParticipantCheckResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.ureca.miniproject.common.BaseCode.*;
 
@@ -42,5 +45,13 @@ public class GameParticipantController {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.of(GAME_PARTICIPANT_ALREADY_JOINED, participant));
+    }
+
+    @GetMapping("/{roomId}/participants")
+    public ResponseEntity<ApiResponse<List<DetailGameParticipantResponse>>> getGameParticipant(@PathVariable("roomId") Long roomId) {
+        List<DetailGameParticipantResponse> detailGameParticipantResponses = gameParticipantService.getDetailGameParticipant(roomId);
+
+        return ResponseEntity.ok(ApiResponse.of(GAME_PARTICIPANT_LIST_READ_SUCCESS, detailGameParticipantResponses));
+
     }
 }

@@ -8,6 +8,7 @@ public class AlreadyJoinedException extends IllegalStateException {
     private final BaseCode baseCode;
 
     public AlreadyJoinedException(BaseCode baseCode) {
+        super(baseCode.getMessage());
         this.baseCode = baseCode;
     }
 }

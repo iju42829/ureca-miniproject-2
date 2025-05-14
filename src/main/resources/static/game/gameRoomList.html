@@ -1,41 +1,116 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>게임방 목록</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <!-- 친구 기능으로 인한 추가 시작-->
-	<style>
-		.modal {
-		    position: fixed;
-		    z-index: 9999;
-		    left: 0;
-		    top: 0;
-		    width: 100%;
-		    height: 100%;
-		    overflow: auto;
-		    background-color: rgba(0,0,0,0.7);
-		}
-		
-		.modal-content {
-		    background-color: #2c2f33;
-		    margin: 5% auto;
-		    padding: 20px;
-		    border-radius: 8px;
-		    width: 80%;
-		    max-width: 800px;
-		}
-		
-		.close-btn {
-		    float: right;
-		    font-size: 28px;
-		    cursor: pointer;
-		}
-	</style>	 
-	<!-- 친구 기능으로 인한 추가 끝-->   
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        #roomList {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .room-card {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-info {
+            flex-grow: 1;
+        }
+
+        .room-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .room-detail {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .btn-join {
+            padding: 10px 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-join:hover {
+            background-color: #45a049;
+        }
+
+        /* 친구 모달 스타일 */
+        .modal {
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        .modal-content {
+            background-color: #2c2f33;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .close-btn {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        #openInviteModal {
+            display: block;
+            margin: 30px auto 0;
+            padding: 10px 20px;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #openInviteModal:hover {
+            background-color: #666;
+        }
+    </style>
 </head>
 <body>
+
 <h1>게임방 목록</h1>
 
 <!-- CSRF 토큰 & 헤더 이름 보관용 -->
@@ -45,18 +120,18 @@
 <div id="roomList"></div>
 
 <!-- 친구 기능으로 인한 추가 시작-->
-<!-- 버튼 -->
 <button id="openInviteModal">친구 관리</button>
 
-<!-- 모달 구조 -->
 <div id="inviteModal" class="modal" style="display:none;">
     <div class="modal-content">
         <span class="close-btn">&times;</span>
         <iframe src="../friend/inviteFriend.html" width="100%" height="600px" style="border: none;"></iframe>
     </div>
 </div>
+<!-- 친구 기능으로 인한 추가 끝-->
 
 <script>
+    // 친구 모달 열기/닫기
     document.getElementById("openInviteModal").onclick = function () {
         document.getElementById("inviteModal").style.display = "block";
     };
@@ -64,9 +139,7 @@
     document.querySelector(".close-btn").onclick = function () {
         document.getElementById("inviteModal").style.display = "none";
     };
-</script>
-<!-- 친구 기능으로 인한 추가 끝-->
-<script>
+
     $(function(){
         let csrfToken, csrfHeader;
 
@@ -78,7 +151,6 @@
             complete: function(xhr) {
                 if (xhr.status === 409) {
                     const joined = xhr.responseJSON.data;
-                    // 참여 중인 방이 있으면 상세 페이지로 바로 이동
                     window.location.href = '/page/gameDetail?roomId=' + joined.roomId;
                     return;
                 }
@@ -86,6 +158,7 @@
                 init();
             }
         });
+
         function init() {
             fetch('/csrf-token', {
                 credentials: 'same-origin'
@@ -94,7 +167,6 @@
                 .then(data => {
                     csrfToken  = data.token;
                     csrfHeader = data.headerName;
-                    // hidden input에도 저장
                     $('#_csrf').val(csrfToken);
                     $('#_csrf_header').val(csrfHeader);
 
@@ -110,11 +182,14 @@
                     $('#roomList').empty();
                     response.data.rooms.forEach(room => {
                         $('#roomList').append(`
-              <div data-room-id="${room.roomId}">
-                방 제목: ${room.title}, 인원: ${room.currentPlayer}/${room.maxPlayer}, 상태: ${room.status}
-                <button class="btn-join">게임 참여</button>
-              </div>
-            `);
+                            <div class="room-card" data-room-id="${room.roomId}">
+                                <div class="room-info">
+                                    <div class="room-title">${room.title}</div>
+                                    <div class="room-detail">인원: ${room.currentPlayer}/${room.maxPlayer} | 상태: ${room.status}</div>
+                                </div>
+                                <button class="btn-join">게임 참여</button>
+                            </div>
+                        `);
                     });
                 },
                 error() {
@@ -124,7 +199,7 @@
         }
 
         $(document).on('click', '.btn-join', function(){
-            const roomId = $(this).closest('div').data('room-id');
+            const roomId = $(this).closest('.room-card').data('room-id');
 
             $.ajax({
                 url: `/api/rooms/${roomId}/join`,
@@ -136,7 +211,7 @@
                     alert('게임에 참여했습니다!');
                     window.location.href = '/page/gameDetail?roomId=' + roomId;
                 },
-                error(xhr) {
+                error() {
                     alert('게임 참여 실패');
                 }
             });

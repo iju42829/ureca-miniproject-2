@@ -9,6 +9,5 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EndStatusResponse {
-    private boolean isEnded;
-
+    private String endStatus;
 }

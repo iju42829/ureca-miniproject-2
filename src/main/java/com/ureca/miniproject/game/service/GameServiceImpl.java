@@ -8,6 +8,7 @@ import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameResultRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
+import com.ureca.miniproject.game.service.response.EndStatus;
 import com.ureca.miniproject.game.service.response.EndStatusResponse;
 import com.ureca.miniproject.game.service.response.GameResultResponse;
 import com.ureca.miniproject.game.service.response.ListGameResultResponse;
@@ -134,13 +135,13 @@ public class GameServiceImpl implements GameService {
                 .count();
 
         if (aliveCitizen == 0) {
-            return new EndStatusResponse(true);
+            return new EndStatusResponse(EndStatus.MAFIA.name());
         }
 
         if (aliveCitizen == 1 && aliveMafia == 1) {
-            return new EndStatusResponse(true);
+            return new EndStatusResponse(EndStatus.CITIZEN.name());
         }
 
-        return new EndStatusResponse(false);
+        return new EndStatusResponse(EndStatus.NONE.name());
     }
 }

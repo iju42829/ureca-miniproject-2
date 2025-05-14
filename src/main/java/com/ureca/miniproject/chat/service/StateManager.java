@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import com.ureca.miniproject.chat.dto.ChatMessage;
 import com.ureca.miniproject.chat.dto.GameState;
 import com.ureca.miniproject.chat.tool.ChatRoomUserTool;
+import com.ureca.miniproject.game.repository.GameParticipantRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +28,8 @@ public class StateManager {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatRoomUserTool chatRoomUserTool;
+    
+    private final GameParticipantRepository gameParticipantRepository;
     private final Map<String, GameState> roomStates = new ConcurrentHashMap<>();
     private final Map<String, Long> debateStartTimes = new ConcurrentHashMap<>();
 
@@ -90,11 +94,40 @@ public class StateManager {
         endMessage.setMessage("시간이 종료되었습니다.");
         endMessage.setType(ChatMessage.MessageType.END_TIME);
         endMessage.setParticipants(baseMessage.getParticipants());
-
+        
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, endMessage);
         saveChat(roomId, endMessage);
+        
+    }
+    public void startNight(String roomId) {
+    	System.out.println("밤 시작");
+        roomStates.put(roomId, GameState.NIGHT);
+        
+        ChatMessage nightMsg = new ChatMessage();
+        nightMsg.setRoomId(roomId);
+        nightMsg.setSender("SYSTEM");
+        nightMsg.setMessage("밤이 되었습니다. 마피아는 시민을 제거하세요.");
+        nightMsg.setType(ChatMessage.MessageType.SYSTEM);
+        nightMsg.setParticipants(chatRoomUserTool.getUsers(roomId));
+        nightMsg.setId(UUID.randomUUID().toString());
+        nightMsg.setDeadUsers(getDeadUsers(roomId));
+        
+        messagingTemplate.convertAndSend("/topic/chat/" + roomId, nightMsg);
+        saveChat(roomId, nightMsg);
+        List<String> allMafiaUsernames = gameParticipantRepository.findMafiaUsernamesByRoomId(Long.parseLong(roomId));
+        List<String> deadUsers = getDeadUsers(roomId);
+
+        for (String mafia : allMafiaUsernames) {
+            if (!deadUsers.contains(mafia)) {
+            	System.out.println("마피아 메시지 전송 대상: " + mafia);
+                messagingTemplate.convertAndSendToUser(mafia, "/queue/night/" + roomId, nightMsg);
+            }
+        }
+
+
     }
 
+    
     public void saveChat(String roomId, ChatMessage message) {
     	if (message.getDeadUsers() == null) {
             message.setDeadUsers(getDeadUsers(roomId));

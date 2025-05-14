@@ -119,6 +119,14 @@ document.addEventListener("DOMContentLoaded",  async () => {
 
                 if (data.participants) updateParticipantList(data.participants,data.deadUsers);
             });
+            stompClient.subscribe("/user/queue/night/" + roomId, (msg) => {
+            	
+                const data = JSON.parse(msg.body);
+                console.log("[마피아 메시지 수신]", data);
+                if (data.message?.includes("마피아는 시민을 제거하세요")) {
+                    showMafiaModal(latestParticipants);  
+                }
+            });
 
             stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
                 roomId: roomId,
@@ -270,6 +278,44 @@ document.addEventListener("DOMContentLoaded",  async () => {
             message: "",
             type: "START_TIME"
         }));
+    }
+    function showMafiaModal(participants) {
+        const voteList = document.getElementById("vote-list");
+        voteList.innerHTML = '';
+        
+        participants.forEach(name => {
+            if (name === sender) return;
+            const li = document.createElement("li");
+            li.textContent = name;
+            li.onclick = () => {
+                document.querySelectorAll("#vote-list li").forEach(el => el.classList.remove("selected"));
+                li.classList.add("selected");
+            };
+            voteList.appendChild(li);
+        });
+
+        document.querySelector("#vote-modal h3").textContent = "밤에 제거할 대상을 선택하세요";
+        document.querySelector(".vote-button").onclick = submitMafiaKill;
+        document.getElementById("vote-modal").style.display = "flex";
+    }
+    function submitMafiaKill() {
+        const selected = document.querySelector("#vote-list li.selected");
+        if (!selected) {
+            alert("대상을 선택하세요.");
+            return;
+        }
+
+        const target = selected.textContent;
+
+        stompClient.send("/app/chat.mafia/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: target,
+            type: "VOTE",
+            participants: latestParticipants
+        }));
+
+        document.getElementById("vote-modal").style.display = "none";
     }
 
     window.sendMessage = sendMessage;

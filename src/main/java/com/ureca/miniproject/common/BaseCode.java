@@ -44,7 +44,11 @@ public enum BaseCode {
 
     // GAME_RESULT
     GAME_RESULT_CREATE_SUCCESS("CREATE_GAME_RESULT_201", HttpStatus.CREATED, "게임 전적 저장에 성공했습니다."),
-    GAME_RESULT_LIST_READ_SUCCESS("READ_LIST_GAME_RESULT_200", HttpStatus.OK, "게임 전적 목록 조회에 성공했습니다.");
+    GAME_RESULT_LIST_READ_SUCCESS("READ_LIST_GAME_RESULT_200", HttpStatus.OK, "게임 전적 목록 조회에 성공했습니다."),
+
+    // GAME
+    GAME_END_STATUS_CHECK_SUCCESS("CHECK_GAME_END_STATUS_200", HttpStatus.OK, "게임 종료 여부 확인에 성공했습니다.");
+
 
     private final String code;
     private final HttpStatus status;

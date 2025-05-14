@@ -8,6 +8,7 @@ import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameResultRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
+import com.ureca.miniproject.game.service.response.EndStatusResponse;
 import com.ureca.miniproject.game.service.response.GameResultResponse;
 import com.ureca.miniproject.game.service.response.ListGameResultResponse;
 import com.ureca.miniproject.user.entity.User;
@@ -116,5 +117,30 @@ public class GameServiceImpl implements GameService {
         }
 
         return listGameResultResponse;
+    }
+
+    @Override
+    public EndStatusResponse isGameEnded(Long roomId) {
+        List<GameParticipant> gameParticipantList = gameParticipantRepository.findAllByGameRoom_Id(roomId);
+
+        List<GameParticipant> aliveParticipants = gameParticipantList.stream().filter(GameParticipant::getIsAlive).toList();
+
+        long aliveMafia = aliveParticipants.stream()
+                .filter(p -> p.getRole() == MAFIA)
+                .count();
+
+        long aliveCitizen = aliveParticipants.stream()
+                .filter(p -> p.getRole() == CITIZEN)
+                .count();
+
+        if (aliveCitizen == 0) {
+            return new EndStatusResponse(true);
+        }
+
+        if (aliveCitizen == 1 && aliveMafia == 1) {
+            return new EndStatusResponse(true);
+        }
+
+        return new EndStatusResponse(false);
     }
 }

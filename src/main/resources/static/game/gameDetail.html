@@ -92,6 +92,7 @@
                 .fail(xhr => {
                     $('#participantList').empty()
                         .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
+                    window.location.href = '/game/gameRoomList.html';
                 });
         }
 

@@ -79,7 +79,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         User user = userRepository.findByEmail(myUserDetails.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+        GameRoom gameRoom = gameRoomRepository.findWithLockById(roomId)
                 .orElseThrow(() -> new GameRoomNotFoundException(GAME_ROOM_NOT_FOUND));
 
         if (gameRoom.getRoomStatus() != WAITING)
@@ -95,7 +95,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         User user = userRepository.findByEmail(myUserDetails.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+        GameRoom gameRoom = gameRoomRepository.findWithLockById(roomId)
                 .orElseThrow(() -> new GameRoomNotFoundException(GAME_ROOM_NOT_FOUND));
 
         if (gameRoom.getHostUser() != user) {

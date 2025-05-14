@@ -16,7 +16,12 @@ public class SecurityConfig {
 			MyAuthenticationSuccessHandler successHandler,
 			MyAuthenticationFailureHandler failureHandler			
 			) throws Exception {
-		return http					
+		return http			
+			.headers(headers -> headers
+	                .frameOptions(frameOptions -> frameOptions
+	                    .sameOrigin() // 또는 .disable() 하면 완전히 끔
+	                )
+	            )
 			 .authorizeHttpRequests(
 					 authz -> {
 					 authz.requestMatchers(
@@ -31,7 +36,8 @@ public class SecurityConfig {
 						"/signup.html",
 					    "/login",
 					    "/logout",				    
-						"/csrf-token"												
+						"/csrf-token",	
+					    "/my/success/endpoint"
 					).permitAll()					 
 				 .anyRequest().authenticated();
 				 }
@@ -45,7 +51,14 @@ public class SecurityConfig {
 					.failureHandler(failureHandler)
 					.permitAll()
 					)
-			.logout(logout->logout.permitAll())								
+			 
+		    .logout((logout) -> 
+		    	logout
+		    		.logoutUrl("/my/logout")
+		    		.logoutSuccessUrl("/my/success/endpoint")
+		    		.permitAll()
+		    		)
+				
 			.build(); 	        
 							
 	}

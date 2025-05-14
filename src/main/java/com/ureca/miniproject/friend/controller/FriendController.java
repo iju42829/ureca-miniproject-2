@@ -72,6 +72,6 @@ public class FriendController {
 		//todo : boolean도 보낼 필요 없고, response entity status만 보내도 됨
 		return ResponseEntity.ok(ApiResponse
 				.of(FRIEND_LIST_SUCCESS,result ));
-	}
+	}	
 		
 }

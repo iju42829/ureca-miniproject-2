@@ -2,280 +2,291 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>친구 초대</title>
+    <title>친구 초대</title>     
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
             crossorigin="anonymous"></script>
+	<style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c2f33;
+            color: #fff;
+            padding: 2rem;
+        }
+
+        h1, h2 {
+            color: #fff;
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            background-color: #40444b;
+            color: #fff;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background-color: #7289da;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+
+        button:hover {
+            background-color: #5865f2;
+        }
+
+        .message {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #40444b;
+            border-radius: 6px;
+        }
+
+        #inviteListContainer,
+        #friendListContainer {
+            margin-top: 1rem;
+            background-color: #23272a;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+
+        .invite-item,
+        .friend-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .invite-item:last-child,
+        .friend-item:last-child {
+            border-bottom: none;
+        }
+
+        .invite-item p,
+        .friend-item p {
+            margin: 0 0 0.5rem 0;
+        }
+
+        #loggedInEmail {
+            font-weight: bold;
+            color: #00b0f4;
+        }
+
+        input[type="hidden"] {
+            display: none;
+        }
+    </style>        
 </head>
-<body>
+<body>	
+
 	<p>로그인된 사용자: <span id="loggedInEmail">불러오는 중...</span></p>
 
     <h1>친구 초대</h1>
 
     <form id="inviteFriendForm">
         <label for="inviteeEmail">초대할 친구 이메일:</label>
-        <input type="text" id="inviteeEmail" name="inviteeEmail" required><br><br>
+        <input type="text" id="inviteeEmail" name="inviteeEmail" required>
 
         <input type="hidden" name="_csrf" id="_csrf" value="">
-
         <button type="submit">초대 보내기</button>
     </form>
 
     <div id="message" class="message"></div>
 
-  	<h2>받은 친구 요청</h2>
+    <h2>받은 친구 요청</h2>
     <div id="inviteListContainer"></div>
 
-
-
-	<h2>친구 목록</h2>
-	<div id="friendListContainer"></div>
+    <h2>친구 목록</h2>
+    <div id="friendListContainer"></div>
 
 
 
 
     <script>
-
-	    function loadFriendRequests() {
-
-			//waiting 중인 친구 요청 list up	    
-			const statusDesired = 'WAITING'; 
-	        $.ajax({
-	            url: '/api/friend/status',
-	            type: 'GET',	   
-	            data: { statusDesired: statusDesired },
-	            success: function (response) {
-                    const inviteList = response.data.invitesList;                    
-                    const container = $('#inviteListContainer');
-                    container.empty();
-					console.log(inviteList)
-
-                    if ( inviteList.length === 0) {
-                        container.append('<p>받은 친구 요청이 없습니다.</p>');
-                        return;
-                    }
-
-                    inviteList.forEach(friend => {
-                        const inviterName = friend.friendId.inviter.userName;
-                        const inviterEmail = friend.friendId.inviter.email;
-                        const status = friend.status;
-
-                        const item = `
-
-                            <div class="invite-item">
-                                <p>보낸 사람: ${inviterName} (${inviterEmail}) - 상태: ${status}</p>
-                                <button class="accept-btn" data-email="${inviterEmail}">수락</button>
-                                <button class="decline-btn" data-email="${inviterEmail}">거절</button>
-                            </div>
-                        `;
-                        container.append(item);
-                    });
-                },
-                error: function () {
-                    alert('친구 요청 목록을 불러오는 데 실패했습니다.');
-                }
-
-	        });
-
-	        
-	     // 친구 요청 거절
-	        $(document).on('click', '.decline-btn', function () {
-	            const $btn = $(this);
-	            const inviterEmail = $btn.data('email');
-	            const csrfToken = $('#_csrf').val();
-
-	            $.ajax({
-	                url: '/api/friend',
-	                type: 'PUT',
-	                contentType: 'application/json',
-	                data: JSON.stringify({ 
-	                    inviterEmail: inviterEmail, 
-	                    statusDesired: 'DECLINED' 
-	                }),
-	                beforeSend: function (xhr) {
-	                    xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken);
-	                },
-	                success: function () {
-	                    alert('거절 완료');
-	                    $btn.closest('.invite-item').remove(); // 해당 항목 제거
-	                    location.reload();
-	                },
-	                error: function () {
-	                    alert('거절 실패');
-	                }
-	            });
-	        });
-
+	    // 공통: CSRF 토큰 설정
+	    function setCsrfToken() {
+	        fetch('/csrf-token', {
+	            method: 'GET',
+	            credentials: 'same-origin'
+	        })
+	        .then(res => res.json())
+	        .then(data => $('#_csrf').val(data.token));
 	    }
-	    // 친구 요청 수락        
-        $(document).on('click', '.accept-btn', function () {
-            const inviterEmail = $(this).data('email');
-            const csrfToken = $('#_csrf').val();
-            $.ajax({
-                url: '/api/friend',
-                type: 'PUT',
-                contentType: 'application/json',               
-                data: JSON.stringify({ 
-                    inviterEmail: inviterEmail, 
-                    statusDesired: 'ACCEPTED' 
-                }),
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken); // CSRF 토큰 추가
-                },
-                success: function () {
-                    alert('수락 완료');
-//                     $btn.closest('.invite-item').remove(); // 해당 친구 요청만 삭제
-                    location.reload();
-                },
-                error: function () {
-                    alert('수락 실패');
-                }
-            });
-        });
-
+	
+	    // 공통: 로그인된 사용자 정보 표시
+	    function loadLoggedInUser() {
+	        fetch('/api/user/me', {
+	            method: 'GET',
+	            credentials: 'same-origin'
+	        })
+	        .then(res => res.json())
+	        .then(result => {
+	            const data = result.data;
+	            $('#loggedInEmail').text(`${data.userName} (${data.email})`);
+	        })
+	        .catch(() => {
+	            $('#loggedInEmail').text("로그인된 사용자를 불러오지 못했습니다.");
+	        });
+	    }
+	
+	    // 친구 초대 요청
+	    function inviteFriend(inviteeEmail) {
+	        const csrfToken = $('#_csrf').val();
+	        $.ajax({
+	            url: '/api/friend',
+	            type: 'POST',
+	            contentType: 'application/json',
+	            data: JSON.stringify({ inviteeEmail }),
+	            beforeSend: xhr => xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken),
+	            success: () => {
+	                $('#message').css('color', 'green').text("초대가 성공적으로 전송되었습니다.");
+	                $('#inviteeEmail').val('');
+	            },
+	            error: xhr => {
+	                const res = xhr.responseJSON;
+	                $('#message').css('color', 'red').text("초대 실패: " + (res?.message || "알 수 없는 오류"));
+	            }
+	        });
+	    }
+	
+	    // 친구 요청 목록 불러오기
+	    function loadFriendRequests() {
+	        $.get('/api/friend/status', { statusDesired: 'WAITING' }, response => {
+	            const inviteList = response.data.invitesList;
+	            const container = $('#inviteListContainer').empty();
+	
+	            if (inviteList.length === 0) {
+	                container.append('<p>받은 친구 요청이 없습니다.</p>');
+	                return;
+	            }
+	
+	            inviteList.forEach(friend => {
+	                const { userName, email } = friend.friendId.inviter;
+	                const status = friend.status;
+	
+	                container.append(`
+	                    <div class="invite-item">
+	                        <p>보낸 사람: ${userName} (${email}) - 상태: ${status}</p>
+	                        <button class="accept-btn" data-email="${email}">수락</button>
+	                        <button class="decline-btn" data-email="${email}">거절</button>
+	                    </div>
+	                `);
+	            });
+	        }).fail(() => alert('친구 요청 목록을 불러오는 데 실패했습니다.'));
+	    }
+	
+	    // 친구 요청 상태 변경 (수락 / 거절)
+	    function respondToRequest(email, status) {
+	        const csrfToken = $('#_csrf').val();
+	        $.ajax({
+	            url: '/api/friend',
+	            type: 'PUT',
+	            contentType: 'application/json',
+	            data: JSON.stringify({ inviterEmail: email, statusDesired: status }),
+	            beforeSend: xhr => xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken),
+	            success: () => {
+	                alert(`${status === 'ACCEPTED' ? '수락' : '거절'} 완료`);
+	                location.reload();
+	            },
+	            error: () => alert(`${status === 'ACCEPTED' ? '수락' : '거절'} 실패`)
+	        });
+	    }
+	
+	    // 친구 목록 불러오기
+	    function loadFriendList() {
+	        $.get('/api/friend', response => {
+	            const friendList = response.data.friendList;
+	            const container = $('#friendListContainer').empty();
+	
+	            if (friendList.length === 0) {
+	                container.append('<p>친구가 없습니다.</p>');
+	                return;
+	            }
+	
+	            friendList.forEach(friend => {
+	                const { userName, email } = friend;
+	                container.append(`
+	                    <div class="friend-item">
+	                        <p>${userName} (${email})</p>
+	                        <button class="delete-btn" data-email="${email}">삭제</button>
+	                    </div>
+	                `);
+	            });
+	        }).fail(() => alert('친구 목록을 불러오는 데 실패했습니다.'));
+	    }
+	
+	    // 친구 삭제
+	    function deleteFriend(email) {
+	        const csrfToken = $('#_csrf').val();
+	        if (!confirm(`${email} 친구를 삭제하시겠습니까?`)) return;
+	
+	        $.ajax({
+	            url: '/api/friend',
+	            type: 'DELETE',
+	            data: { emailToDelete: email },
+	            beforeSend: xhr => xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken),
+	            success: () => {
+	                alert('친구가 삭제되었습니다.');
+	                loadFriendList();
+	            },
+	            error: () => alert('친구 삭제에 실패했습니다.')
+	        });
+	    }
+	
+	    // 이벤트 바인딩
+	    $(document).on('click', '.accept-btn', function () {
+	        respondToRequest($(this).data('email'), 'ACCEPTED');
+	    });
+	
+	    $(document).on('click', '.decline-btn', function () {
+	        respondToRequest($(this).data('email'), 'DECLINED');
+	    });
+	
+	    $(document).on('click', '.delete-btn', function () {
+	        deleteFriend($(this).data('email'));
+	    });
+	
+	    // 문서 로드 시 실행	    
+        // 문서 로드 시 2초마다 친구 요청 및 목록 자동 로딩
         $(document).ready(function () {
-            // CSRF 토큰 가져오기
-            fetch('/csrf-token', {
-                method: 'GET',
-                credentials: 'same-origin'
-            })
-            .then(res => res.json())
-            .then(data => {
-                $('#_csrf').val(data.token); // CSRF 토큰 값 설정
-            });
-
-
-
-            let loggedInEmail = '';
-
-            fetch('/api/user/me', {
-                method: 'GET',
-                credentials: 'same-origin'
-            })
-            .then(res => res.json())
-            .then(result => {
-                const data = result.data;
-                loggedInEmail = data.email;
-                $('#loggedInEmail').text(`${data.userName} (${data.email})`);
-            })
-            .catch(() => {
-                $('#loggedInEmail').text("로그인된 사용자를 불러오지 못했습니다.");
-            });
-
-            
+            setCsrfToken();
+            loadLoggedInUser();
             loadFriendRequests();
-            loadFriendList();      
-            // 폼 제출 이벤트 처리
+            loadFriendList();
+
             $('#inviteFriendForm').submit(function (e) {
                 e.preventDefault();
-
-                const inviteeEmail = $('#inviteeEmail').val();
-                const csrfToken = $('#_csrf').val();
-                const messageDiv = $('#message');
-
-                if (!inviteeEmail) {
-                    messageDiv.css('color', 'red').text("이메일을 입력해주세요.");
+                const email = $('#inviteeEmail').val();
+                if (!email) {
+                    $('#message').css('color', 'red').text("이메일을 입력해주세요.");
                     return;
                 }
-
-                $.ajax({
-
-                    url: '/api/friend',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ inviteeEmail: inviteeEmail }),
-
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken); // CSRF 토큰 추가
-                    },
-
-                    success: function (response) {
-                        messageDiv.css('color', 'green').text("초대가 성공적으로 전송되었습니다.");
-                        $('#inviteeEmail').val(''); // 이메일 입력 필드 초기화                        
-                    },
-
-                    error: function (xhr) {
-                        const res = xhr.responseJSON;
-                        messageDiv.css('color', 'red').text("초대 실패: " + res.message);
-                        console.log(xhr.status);
-                        if (xhr.status != 201) {
-                            const res = xhr.responseJSON;
-                            messageDiv.css('color', 'red').text("초대 실패:" + res.message );
-                        }else if(xhr.status === 409){
-                        	const res = xhr.responseJSON;
-                            messageDiv.css('color', 'red').text("초대 실패:" + res.message);
-                        }else if(xhr.status===406){
-                        	const res = xhr.responseJSON;
-                            messageDiv.css('color', 'red').text("초대 실패:" + res.message);
-                        }else {
-                            // 다른 상태 코드 처리
-                            messageDiv.css('color', 'red').text("알 수 없는 오류가 발생했습니다.");
-                        }
-                    }
-                });
+                inviteFriend(email);
             });
+
+            setInterval(loadFriendRequests, 2000);
+            setInterval(loadFriendList, 2000);
         });
-        //친구들 listup
-        function loadFriendList() {
-		    $.ajax({
-		        url: '/api/friend',
-		        type: 'GET',
-		        success: function (response) {
-		            const friendList = response.data.friendList;
-		            const container = $('#friendListContainer');
-		            container.empty();
-		            console.log(friendList);
-		
-		            if (friendList.length === 0) {
-		                container.append('<p>친구가 없습니다.</p>');
-		                return;
-		            }
-		
-		            friendList.forEach(friend => {
-		                const friendName = friend.userName;
-		                const friendEmail = friend.email;
-		
-		                const item = `
-		                    <div class="friend-item">
-		                        <p>${friendName} (${friendEmail})</p>
-		                        <button class="delete-btn" data-email="${friendEmail}">삭제</button>
-		                    </div>
-		                `;
-		                container.append(item);
-		            });
-		        },
-		        error: function () {
-		            alert('친구 목록을 불러오는 데 실패했습니다.');
-		        }
-		    });
-		    
-		 	// 친구 삭제 버튼 이벤트
-		    $(document).on('click', '.delete-btn', function () {
-		        const emailToDelete = $(this).data('email');
-		        const csrfToken = $('#_csrf').val();
+	</script>
+	
 
-		        if (!confirm(`${emailToDelete} 친구를 삭제하시겠습니까?`)) return;
-
-		        $.ajax({
-		            url: '/api/friend',
-		            type: 'DELETE',		            
-		            data: {emailToDelete: emailToDelete },
-		            beforeSend: function (xhr) {
-		                xhr.setRequestHeader('X-XSRF-TOKEN', csrfToken);
-		            },
-		            success: function () {
-		                alert('친구가 삭제되었습니다.');
-		                loadFriendList(); // 목록 갱신
-		            },
-		            error: function () {
-		                alert('친구 삭제에 실패했습니다.');
-		            }
-		        });
-		    });
-
-		}
-
-
-    </script>
 </body>
 </html>

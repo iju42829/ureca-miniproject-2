@@ -62,20 +62,8 @@ public class FriendServiceImpl implements FriendService {
 		
 		
 		FriendId friendId = FriendId.builder().invitee(invitee).inviter(inviter).build();
-		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();	
-			//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw
-			//상호추가 방지
-		   	//본인이 invitee로 되어 있고, waiting인 상태의 friend가 있으면  throw
-//		if(friendRepository.existsByFriendIdInviteeIdAndStatus(user.getId(),WAITING) ||
-////		   friendRepository.existsByFriendIdInviteeIdAndStatus(me.getId(),ACCEPTED)||		   
-////		   friendRepository.existsByFriendIdInviterIdAndStatus(me.getId(),ACCEPTED)||  //-> 이건데...35와 34사이에 accept 된거를 잡아내서 35에서 33으로 신청하는 것도 막힘. 즉, 상대방의 id를 고려해야하는데,,본인만 고려. 중복된거 처리 같은 경우도 양측다 고려를 해야함/
-//		   friendRepository.existsByFriendIdInviterIdAndStatus(user.getId(),WAITING)){
-//			throw new InviteAlreadyExistException(INVITE_ALREADY_EXIST);
-//		}
-		
-		//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw
-		//상호추가 방지
-	   	//본인이 invitee로 되어 있고, waiting인 상태의 friend가 있으면  throw
+		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();				
+		//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw (상호추가 방지)
 		System.out.println(friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED));
 		if(!friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), WAITING).isEmpty() ||
 		   !friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED).isEmpty() ){
@@ -145,7 +133,6 @@ public class FriendServiceImpl implements FriendService {
 		User me = userRepository.findByEmail(myUserDetails.getEmail()).get();		
 		
 		//일단 login된 user가 invitee이든, inviter이든 상관없이 가져오기
-
 		List<Friend> friendInfos = friendRepository.findFriendsByUserIdAndStatus(me.getId(),Status.ACCEPTED);
 		//본인이 invitee가 아닌것
 		List<User> friends = new ArrayList<User>(); 

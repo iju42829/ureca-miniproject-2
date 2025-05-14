@@ -42,6 +42,7 @@ public class VoteController {
         );
         resultMessage.setDeadUsers(stateManager.getDeadUsers(roomId));
         resultMessage.setId(UUID.randomUUID().toString());
+        System.out.println("투표결과:");
         System.out.println(resultMessage);
         stateManager.saveChat(roomId, resultMessage); 
         return resultMessage;

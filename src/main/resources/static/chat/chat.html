@@ -56,6 +56,9 @@ document.addEventListener("DOMContentLoaded",  async () => {
     let sender = null;
     let latestParticipants = [];
     const timeSpan = document.getElementById("time");
+    const nowTime = await fetchTimer(roomId);
+    
+    timeSpan.textContent = nowTime;
 
     const displayedMessageIds = new Set();
 
@@ -69,9 +72,23 @@ document.addEventListener("DOMContentLoaded",  async () => {
             window.location.href = "/login.html";
         }
     }
+    async function fetchTimer(roomId) {
+        try {
+            const res = await fetch(`/api/state/${roomId}/time-left`);
+            const data = await res.json();
+            const now = Date.now();
+            const elapsed = now - data.startTime;
+            const remaining = Math.max(0, 120000 - elapsed);
+            return Math.floor(remaining / 1000);
+        } catch (err) {
+            console.error("타이머 정보를 불러오는 데 실패했습니다.", err);
+            return null;
+        }
+    }
 
     async function initializeWebSocket() {
         sender = await fetchSender();
+        now_time = await fetchTimer();
         const socket = new SockJS("/ws/chat");
         stompClient = Stomp.over(socket);
 
@@ -113,22 +130,23 @@ document.addEventListener("DOMContentLoaded",  async () => {
     }
 
     async function loadChatHistory() {
-        fetch(`/api/state/${roomId}/messages`)
-            .then(res => res.json())
-            .then(messages => {
-                messages.forEach(msg => {
-                    if (msg.type === "TALK") {
-                        if (msg.sender === "SYSTEM") return;
-                        const isMe = msg.sender === sender;
-                        displayMessage(msg.sender, msg.message, isMe);
-                    } else {
-                    	console.log("sssssss");
-                    	console.log(msg);
-                        displayNotice(msg);
-                    }
-                });
-            });
+        const messages = await fetch(`/api/state/${roomId}/messages`).then(res => res.json());
+        
+        messages.forEach(msg => {
+            if (msg.type === "TALK") {
+                if (msg.sender === "SYSTEM") return;
+                const isMe = msg.sender === sender;
+                displayMessage(msg.sender, msg.message, isMe);
+            } else {
+                displayNotice(msg);
+            }
+
+            if (msg.participants) {
+                updateParticipantList(msg.participants, msg.deadUsers || []);
+            }
+        });
     }
+
 
     window.addEventListener("beforeunload", () => {
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({

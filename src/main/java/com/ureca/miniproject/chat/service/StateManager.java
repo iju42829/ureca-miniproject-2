@@ -96,6 +96,9 @@ public class StateManager {
     }
 
     public void saveChat(String roomId, ChatMessage message) {
+    	if (message.getDeadUsers() == null) {
+            message.setDeadUsers(getDeadUsers(roomId));
+        }
         chatHistories.computeIfAbsent(roomId, k -> new ArrayList<>()).add(message);
     }
 

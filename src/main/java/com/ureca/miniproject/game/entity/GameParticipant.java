@@ -18,7 +18,7 @@ public class GameParticipant extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private GameRoom gameRoom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     private User user;
 
     @Column(nullable = false)

@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import com.ureca.miniproject.chat.dto.ChatMessage;
 import com.ureca.miniproject.chat.dto.GameState;
 import com.ureca.miniproject.chat.tool.ChatRoomUserTool;
+import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -155,8 +156,25 @@ public class StateManager {
     }
     
 
+    
     public void setUserAsDead(String roomId, String username) {
         deadUsers.computeIfAbsent(roomId, k -> new ArrayList<>()).add(username);
+
+        try {
+            Long roomIdLong = Long.parseLong(roomId);
+            Optional<GameParticipant> optional = gameParticipantRepository.findAllByGameRoom_Id(roomIdLong)
+                .stream()
+                .filter(p -> p.getUser().getUserName().equals(username))
+                .findFirst();
+
+            optional.ifPresent(participant -> {
+                participant.setIsAlive(false);
+                gameParticipantRepository.save(participant);
+            });
+
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
     }
 
     

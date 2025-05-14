@@ -10,6 +10,7 @@ public class GameRoomNotFoundException extends NoSuchElementException {
     private final BaseCode baseCode;
 
     public GameRoomNotFoundException(BaseCode baseCode) {
+        super(baseCode.getMessage());
         this.baseCode = baseCode;
     }
 }

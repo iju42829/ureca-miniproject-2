@@ -19,9 +19,9 @@ public class ChatMessage {
     private Long startTime;
     private List<String> participants;
     private String id = UUID.randomUUID().toString();
-
+    private List<String> deadUsers;
     public enum MessageType {
-        ENTER, TALK, LEAVE, VOTE, END_TIME, START_TIME
+        ENTER, TALK, LEAVE, VOTE, END_TIME, START_TIME, SYSTEM
     }
 
 }

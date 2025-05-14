@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.ureca.miniproject.chat.dto.ChatMessage;
 import com.ureca.miniproject.chat.dto.GameState;
+import com.ureca.miniproject.chat.tool.ChatRoomUserTool;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,12 +25,12 @@ import lombok.RequiredArgsConstructor;
 public class StateManager {
 
     private final SimpMessagingTemplate messagingTemplate;
-
+    private final ChatRoomUserTool chatRoomUserTool;
     private final Map<String, GameState> roomStates = new ConcurrentHashMap<>();
     private final Map<String, Long> debateStartTimes = new ConcurrentHashMap<>();
 
     private final Map<String, List<ChatMessage>> chatHistories = new ConcurrentHashMap<>();
-
+    private final Map<String, List<String>> deadUsers = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static final long DEBATE_DURATION = 120_000;
@@ -42,9 +43,8 @@ public class StateManager {
         baseMessage.setStartTime(startTime);
         baseMessage.setMessage("토론을 시작합니다.");
         baseMessage.setType(ChatMessage.MessageType.START_TIME);
-
+        baseMessage.setId(UUID.randomUUID().toString());
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, baseMessage);
-
         saveChat(roomId, baseMessage); 
 
 
@@ -72,7 +72,9 @@ public class StateManager {
                         ChatMessage.MessageType.TALK,
                         null,
                         baseMessage.getParticipants(),
-                        UUID.randomUUID().toString()
+                        UUID.randomUUID().toString(),
+                        getDeadUsers(roomId)
+                        
                 ));
             }
         }, 0, 1, TimeUnit.SECONDS);
@@ -115,5 +117,16 @@ public class StateManager {
     public GameState getGameState(String roomId) {
         return roomStates.getOrDefault(roomId, GameState.WAITING);
     }
+    
+
+    public void setUserAsDead(String roomId, String username) {
+        deadUsers.computeIfAbsent(roomId, k -> new ArrayList<>()).add(username);
+    }
+
+    
+    public List<String> getDeadUsers(String roomId) {
+        return deadUsers.getOrDefault(roomId, new ArrayList<>());
+    }
+
 
 }

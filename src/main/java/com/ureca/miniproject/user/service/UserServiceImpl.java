@@ -1,6 +1,5 @@
 package com.ureca.miniproject.user.service;
 
-import static com.ureca.miniproject.common.BaseCode.INTERNAL_SERVER_ERROR;
 import static com.ureca.miniproject.common.BaseCode.USER_ALREADY_EXIST;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,6 +10,7 @@ import com.ureca.miniproject.user.entity.Role;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.exception.UserAlreadyExistException;
 import com.ureca.miniproject.user.repository.UserRepository;
+import com.ureca.miniproject.user.service.response.ListUserResponse;
 import com.ureca.miniproject.user.service.response.SignUpResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,9 @@ public class UserServiceImpl implements UserService{
 		
 		return new SignUpResponse(user.getUserName(),user.getEmail());
 	}
-//	UserResultDto listUsers(); // 전체 사용자 목록
+	public ListUserResponse listUsers() {		
+		return new ListUserResponse( userRepository.findAll());
+	}
 //	UserResultDto detailUser(int id); // 사용자 상세 조회
 //	UserResultDto updateUser(UserDto user); // 사용자 수정
 //	void deleteUser(int id); // 사용자 삭제

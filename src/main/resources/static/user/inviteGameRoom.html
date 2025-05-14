@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>유저 목록</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .user-list {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+    .invite-btn {
+      padding: 5px 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .invite-btn:disabled {
+      background-color: gray;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>유저 목록</h2>
+  <div class="user-list" id="userList"></div>
+
+  <script>
+    // 1. 유저 목록 가져오기
+    function fetchUsers() {
+      fetch('/api/user') 
+        .then(response => response.json())
+        .then(users => {
+          const listContainer = document.getElementById('userList');
+          const userList = users.data.users;          
+          listContainer.innerHTML = ''; // 초기화
+
+          userList.forEach(user => {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user-item';
+
+            userDiv.innerHTML = `
+              <span>${user.userName} (${user.email})</span>
+              <button class="invite-btn" onclick="inviteUser(${user.id}, this)">초대</button>
+            `;
+
+            listContainer.appendChild(userDiv);
+          });
+        })
+        .catch(error => {
+          console.error('유저 불러오기 실패:', error);
+        });
+    }
+
+    // 2. 유저 초대하기
+    function inviteUser(userId, buttonElement) {
+      fetch('/api/friends/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          inviteeId: userId
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          alert('초대 완료!');
+          buttonElement.disabled = true;
+          buttonElement.textContent = '초대됨';
+        } else {
+          alert('초대 실패!');
+        }
+      })
+      .catch(error => {
+        console.error('초대 중 오류:', error);
+      });
+    }
+
+    // 3. 페이지 로드시 유저 목록 로드
+    window.onload = fetchUsers;
+  </script>
+
+</body>
+</html>

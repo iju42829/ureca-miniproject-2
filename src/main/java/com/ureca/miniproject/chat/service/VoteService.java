@@ -40,7 +40,9 @@ public class VoteService {
 
         return null;
     }
-
+    public int getTotalVotes(String roomId) {
+        return totalVotes.getOrDefault(roomId, 0);
+    }
     public void clearVotes(String roomId) {
         voteCounts.remove(roomId);
         totalVotes.remove(roomId);

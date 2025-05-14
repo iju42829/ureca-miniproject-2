@@ -172,7 +172,7 @@ public class FriendServiceImpl implements FriendService {
 		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();	
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();
 
-		List<Friend> friendInfos = friendRepository.findFriends(user.getEmail(), emailToDelete);
+		List<Friend> friendInfos = friendRepository.findFriendsByEmail(user.getEmail(), emailToDelete);
 
 		try {
 			friendInfos.forEach(friend -> {

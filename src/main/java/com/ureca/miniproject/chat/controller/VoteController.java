@@ -55,23 +55,29 @@ public class VoteController {
             );
             messagingTemplate.convertAndSend("/topic/chat/" + roomId, resultMessage);
             stateManager.saveChat(roomId, resultMessage);
-
+            
             if (resultDto.isDecided()) {
                 shouldStartNight = true;
-                stateManager.checkAndEndGame(roomId);
             }
         }
 
         if (shouldStartNight) {
             try {
+            	voteService.clearVotes(roomId);
+            	
                 Thread.sleep(300); 
+                stateManager.checkAndEndGame(roomId);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-
-            stateManager.startNight(roomId);
-            voteService.clearVotes(roomId);
+            
+            
+//            stateManager.startNight(roomId);
+            
         }
+        
+        
+        
     }
 
 }

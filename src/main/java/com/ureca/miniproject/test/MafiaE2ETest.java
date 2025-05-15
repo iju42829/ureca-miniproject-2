@@ -100,6 +100,7 @@ public class MafiaE2ETest {
             playerOnePage.waitForTimeout(1000); 
             playerOnePage.waitForSelector("#startBtn", new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE));
             playerOnePage.click("#startBtn");
+            playerOnePage.waitForTimeout(1000);
             System.out.println("🚀 test1 게임 시작 버튼 클릭 완료");
         }
 

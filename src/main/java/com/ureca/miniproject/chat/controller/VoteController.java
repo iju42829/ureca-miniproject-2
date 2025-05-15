@@ -14,7 +14,6 @@ import com.ureca.miniproject.chat.service.StateManager;
 import com.ureca.miniproject.chat.service.VoteService;
 
 import lombok.RequiredArgsConstructor;
-
 @Controller
 @RequiredArgsConstructor
 public class VoteController {
@@ -25,11 +24,12 @@ public class VoteController {
 
     @MessageMapping("/chat.vote/{roomId}")
     public void vote(@DestinationVariable("roomId") String roomId, @Payload ChatMessage message) {
-    	if (stateManager.getGameState(roomId) == GameState.END) return;
+        if (stateManager.getGameState(roomId) == GameState.END) return;
 
         int participantCount = message.getParticipants().size();
+        String sender = message.getSender();
         VoteResultDto resultDto = voteService.recordVote(roomId, message.getMessage(), participantCount);
-        
+
         ChatMessage resultMessage = new ChatMessage();
         resultMessage.setRoomId(roomId);
         resultMessage.setSender("SYSTEM");
@@ -41,43 +41,60 @@ public class VoteController {
         boolean shouldStartNight = false;
 
         if (resultDto == null) {
-            if (voteService.getTotalVotes(roomId) == participantCount) {
-                resultMessage.setMessage("이번 투표는 무효 처리되었습니다.");
+        	
+            if (voteService.isVoteComplete(roomId, participantCount)) {
+                resultDto = voteService.getPendingResult(roomId);
+                int votedCount = voteService.getTotalVotes(roomId);
+                if (resultDto != null && resultDto.isDecided()) {
+                	
+                	resultMessage.setMessage("(" + votedCount + "/" + participantCount + ")명이 투표하였습니다.");
+                	messagingTemplate.convertAndSend("/topic/chat/" + roomId, resultMessage);
+                	stateManager.saveChat(roomId, resultMessage);
+
+                	ChatMessage majorityMsg = new ChatMessage();
+                	majorityMsg.setRoomId(roomId);
+                	majorityMsg.setSender("SYSTEM");
+                	majorityMsg.setType(ChatMessage.MessageType.SYSTEM);
+                	majorityMsg.setMessage(resultDto.getTarget() + "님이 과반수 득표로 지목되었습니다.");
+                	majorityMsg.setParticipants(message.getParticipants());
+                	majorityMsg.setDeadUsers(stateManager.getDeadUsers(roomId));
+                	majorityMsg.setId(UUID.randomUUID().toString());
+                	messagingTemplate.convertAndSend("/topic/chat/" + roomId, majorityMsg);
+                	stateManager.saveChat(roomId, majorityMsg);
+                    stateManager.setUserAsDead(roomId, resultDto.getTarget());
+                    shouldStartNight = true;
+                } else {
+                	resultMessage.setMessage("(" + votedCount + "/" + participantCount + ")명이 투표하였습니다.");
+                	messagingTemplate.convertAndSend("/topic/chat/" + roomId, resultMessage);
+                	stateManager.saveChat(roomId, resultMessage);
+                    resultMessage.setMessage("이번 투표는 무효 처리되었습니다.");
+                    shouldStartNight = true;
+                }
+
                 messagingTemplate.convertAndSend("/topic/chat/" + roomId, resultMessage);
                 stateManager.saveChat(roomId, resultMessage);
-                shouldStartNight = true;
+                voteService.clearVotes(roomId);
+            } else {
+            	int votedCount = voteService.getTotalVotes(roomId);
+                resultMessage.setMessage("(" + votedCount + "/" + participantCount + ")명이 투표하였습니다.");
+                messagingTemplate.convertAndSend("/topic/chat/" + roomId, resultMessage);
+                stateManager.saveChat(roomId, resultMessage);
             }
         } else {
-            resultMessage.setMessage(
-                resultDto.isDecided()
-                    ? resultDto.getTarget() + "님이 과반수 득표로 지목되었습니다."
-                    : "투표가 진행 중입니다..."
-            );
-            messagingTemplate.convertAndSend("/topic/chat/" + roomId, resultMessage);
-            stateManager.saveChat(roomId, resultMessage);
-            
-            if (resultDto.isDecided()) {
-                shouldStartNight = true;
-            }
+            int votedCount = voteService.getTotalVotes(roomId);
+			resultMessage.setMessage("(" + votedCount + "/" + participantCount + ")명이 투표하였습니다.");
+			messagingTemplate.convertAndSend("/topic/chat/" + roomId, resultMessage);
+			stateManager.saveChat(roomId, resultMessage);
         }
 
         if (shouldStartNight) {
             try {
-            	voteService.clearVotes(roomId);
-            	
-                Thread.sleep(300); 
+                Thread.sleep(300);
                 stateManager.checkAndEndGame(roomId);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            
-            
-//            stateManager.startNight(roomId);
-            
         }
-        
-        
-        
     }
-
 }
+

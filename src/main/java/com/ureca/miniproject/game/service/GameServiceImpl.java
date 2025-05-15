@@ -5,9 +5,12 @@ import com.ureca.miniproject.game.controller.request.EndGameRequest;
 import com.ureca.miniproject.game.entity.*;
 import com.ureca.miniproject.game.exception.GameParticipantNotFoundException;
 import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
+import com.ureca.miniproject.game.exception.NotEnoughParticipantsException;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameResultRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
+import com.ureca.miniproject.game.service.response.EndStatus;
+import com.ureca.miniproject.game.service.response.EndStatusResponse;
 import com.ureca.miniproject.game.service.response.GameResultResponse;
 import com.ureca.miniproject.game.service.response.ListGameResultResponse;
 import com.ureca.miniproject.user.entity.User;
@@ -43,13 +46,25 @@ public class GameServiceImpl implements GameService {
 
         List<GameParticipant> participants = gameRoom.getParticipants();
 
-        int mafiaIndex = ThreadLocalRandom.current()
-                .nextInt(participants.size());
+        int size = participants.size();
+
+        if (size < 3) {
+            throw new NotEnoughParticipantsException(GAME_ROOM_NOT_ENOUGH_PARTICIPANTS);
+        }
+
+        int mafiaIndex = ThreadLocalRandom.current().nextInt(size);
+
+        int policeIndex;
+        do {
+            policeIndex = ThreadLocalRandom.current().nextInt(size);
+        } while (policeIndex == mafiaIndex);
 
         for (int i = 0; i < participants.size(); i++) {
             GameParticipant p = participants.get(i);
             if (i == mafiaIndex) {
                 p.setRole(MAFIA);
+            } else if (i == policeIndex) {
+                p.setRole(POLICE);
             } else {
                 p.setRole(CITIZEN);
             }
@@ -116,5 +131,34 @@ public class GameServiceImpl implements GameService {
         }
 
         return listGameResultResponse;
+    }
+
+    @Override
+    public EndStatusResponse isGameEnded(Long roomId) {
+        List<GameParticipant> gameParticipantList = gameParticipantRepository.findAllByGameRoom_Id(roomId);
+
+        List<GameParticipant> aliveParticipants = gameParticipantList.stream().filter(GameParticipant::getIsAlive).toList();
+
+        long aliveMafia = aliveParticipants.stream()
+                .filter(p -> p.getRole() == MAFIA)
+                .count();
+
+        long aliveCitizen = aliveParticipants.stream()
+                .filter(p -> p.getRole() == CITIZEN)
+                .count();
+
+        long alivePolice = aliveParticipants.stream()
+                .filter(p -> p.getRole() == POLICE)
+                .count();
+
+        if (aliveMafia == 0) {
+            return new EndStatusResponse(EndStatus.CITIZEN.name());
+        }
+
+        if (aliveMafia >= alivePolice + aliveCitizen) {
+            return new EndStatusResponse(EndStatus.MAFIA.name());
+        }
+
+        return new EndStatusResponse(EndStatus.NONE.name());
     }
 }

@@ -15,6 +15,7 @@ import com.ureca.miniproject.common.ApiResponse;
 import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.user.controller.request.SignUpRequest;
 import com.ureca.miniproject.user.service.UserService;
+import com.ureca.miniproject.user.service.response.ListUserResponse;
 import com.ureca.miniproject.user.service.response.MyInfoResponse;
 import com.ureca.miniproject.user.service.response.SignUpResponse;
 
@@ -37,9 +38,17 @@ public class UserController {
 	@GetMapping("/user/me")
 	public ResponseEntity<ApiResponse<MyInfoResponse>> myInfo(){
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();		
-		System.out.println("로그인 사용자 " + myUserDetails.getEmail());
+		MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();				
 		
 		return ResponseEntity.ok(ApiResponse.of(USER_FIND_SUCCESS,new MyInfoResponse(myUserDetails.getUsername(),myUserDetails.getEmail())));
+	}
+	
+	
+	@GetMapping("/user")
+	public ResponseEntity<ApiResponse<ListUserResponse>> loadUsers(){
+		
+		ListUserResponse listUserResponse = userService.listUsers();
+		
+		return ResponseEntity.ok(ApiResponse.of(USER_FIND_SUCCESS,listUserResponse));
 	}
 }

@@ -30,8 +30,8 @@
 <div class="sidebar">
     <button onclick="toggleRulebook(true)">룰북 보기</button>
     <div id="timer" style="visibility: visible;">남은 시간: <span id="time">0</span>초</div>
-    <button id="end-timer-btn" onclick="endTimerNow()">시간 조기 종료</button>
-    <button onclick="startDebate()">토론 시작</button>
+    <button id="end-timer-btn" onclick="endTimerNow()" disabled>시간 조기 종료</button>
+    <button id="start-debate-btn" onclick="startDebate()">토론 시작</button>
 
     <h4>참여자 목록</h4>
     <ul id="participant-list" class="participant-list"></ul>
@@ -56,6 +56,9 @@ document.addEventListener("DOMContentLoaded",  async () => {
     let sender = null;
     let latestParticipants = [];
     const timeSpan = document.getElementById("time");
+    const nowTime = await fetchTimer(roomId);
+    
+    timeSpan.textContent = nowTime;
 
     const displayedMessageIds = new Set();
 
@@ -69,9 +72,43 @@ document.addEventListener("DOMContentLoaded",  async () => {
             window.location.href = "/login.html";
         }
     }
+    async function fetchTimer(roomId) {
+        try {
+            const res = await fetch(`/api/state/${roomId}/time-left`);
+            const data = await res.json();
+            const now = Date.now();
+            const elapsed = now - data.startTime;
+            const remaining = Math.max(0, 120000 - elapsed);
+            return Math.floor(remaining / 1000);
+        } catch (err) {
+            console.error("타이머 정보를 불러오는 데 실패했습니다.", err);
+            return null;
+        }
+    }
+    async function checkIfHost() {
+        try {
+            const res = await fetch(`/api/state/${roomId}/is-host`, { credentials: "same-origin" });
+            const json = await res.json();
 
+            const isHost = json.isHost;
+            const startBtn = document.getElementById("start-debate-btn");
+            const endBtn = document.getElementById("end-timer-btn");
+
+            if (!isHost) {
+                if (startBtn) startBtn.style.display = "none";
+                if (endBtn) endBtn.style.display = "none";
+            } else {
+                if (startBtn) startBtn.style.display = "inline-block";
+                if (endBtn) endBtn.style.display = "inline-block";
+            }
+        } catch (err) {
+            console.error("방장 여부 확인 실패:", err);
+        }
+    }
     async function initializeWebSocket() {
         sender = await fetchSender();
+        now_time = await fetchTimer();
+        await checkIfHost();
         const socket = new SockJS("/ws/chat");
         stompClient = Stomp.over(socket);
 
@@ -92,17 +129,56 @@ document.addEventListener("DOMContentLoaded",  async () => {
                 } else if (data.type === "END_TIME") {
                     displayNotice(data);
                     timeSpan.textContent = "0";
-                    document.getElementById("end-timer-btn").disabled = true;
-                    showVoteModal(latestParticipants);
+                    setTimeout(() => {
+                    	document.getElementById("message").disabled = true;
+                        document.querySelector("button[onclick='sendMessage()']").disabled = true;
+                        document.getElementById("end-timer-btn").disabled = true;
+                        showVoteModal(latestParticipants, data.deadUsers || []);
+                    }, 1500);
+                    
+                    
                 } else if (data.type === "START_TIME") {
+                	document.getElementById("end-timer-btn").disabled = false;
                     displayNotice(data);
+                    if (!data.deadUsers?.includes(sender)) {
+                        document.getElementById("message").disabled = false;
+                        document.querySelector("button[onclick='sendMessage()']").disabled = false;
+                    }
                 } else if (data.type === "SYSTEM") {
+                	if (data.message?.includes("승리!")) {
+                        document.getElementById("message").disabled = false;
+                        document.querySelector("button[onclick='sendMessage()']").disabled = false;
+                    }
                     displayNotice(data);
                 } 
 
-                if (data.participants) updateParticipantList(data.participants,data.deadUsers);
+                if (data.participants) {
+                	updateParticipantList(data.participants,data.deadUsers);
+                	if (data.deadUsers && data.deadUsers.includes(sender)) {
+                        document.getElementById("message").disabled = true;
+                        document.querySelector("button[onclick='sendMessage()']").disabled = true;
+                    }
+                }
             });
+            stompClient.subscribe("/user/queue/night/" + roomId, (msg) => {
+            	
+                const data = JSON.parse(msg.body);
+                console.log("[마피아 메시지 수신]", data);
+                if (data.message?.includes("마피아는 시민을 제거하세요")) {
+                    showMafiaModal(latestParticipants,data.deadUsers);  
+                }
+            });
+            stompClient.subscribe("/user/queue/police/" + roomId, (msg) => {
+                const data = JSON.parse(msg.body);
+                console.log("[경찰 메시지 수신]", data);
 
+                if (data.message?.includes("직업을 알 수 있습니다")) {
+                    showPoliceModal(latestParticipants,data.deadUsers);
+
+                } else if (data.message?.includes("님의 직업은 [")) {
+                    alert(data.message);
+                }
+            });
             stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
                 roomId: roomId,
                 sender: sender,
@@ -113,22 +189,27 @@ document.addEventListener("DOMContentLoaded",  async () => {
     }
 
     async function loadChatHistory() {
-        fetch(`/api/state/${roomId}/messages`)
-            .then(res => res.json())
-            .then(messages => {
-                messages.forEach(msg => {
-                    if (msg.type === "TALK") {
-                        if (msg.sender === "SYSTEM") return;
-                        const isMe = msg.sender === sender;
-                        displayMessage(msg.sender, msg.message, isMe);
-                    } else {
-                    	console.log("sssssss");
-                    	console.log(msg);
-                        displayNotice(msg);
-                    }
-                });
-            });
+        const messages = await fetch(`/api/state/${roomId}/messages`).then(res => res.json());
+        
+        messages.forEach(msg => {
+            if (msg.type === "TALK") {
+                if (msg.sender === "SYSTEM") return;
+                const isMe = msg.sender === sender;
+                displayMessage(msg.sender, msg.message, isMe);
+            } else {
+                displayNotice(msg);
+            }
+
+            if (msg.participants) {
+                updateParticipantList(msg.participants, msg.deadUsers || []);
+                if (data.deadUsers && data.deadUsers.includes(sender)) {
+                    document.getElementById("message").disabled = true;
+                    document.querySelector("button[onclick='sendMessage()']").disabled = true;
+                }
+            }
+        });
     }
+
 
     window.addEventListener("beforeunload", () => {
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
@@ -198,11 +279,15 @@ document.addEventListener("DOMContentLoaded",  async () => {
     }
 
 
-    function showVoteModal(participants) {
+    function showVoteModal(participants, deadUsers) {
+    	
+    	deadUsers = deadUsers || [];
         const voteList = document.getElementById("vote-list");
         voteList.innerHTML = '';
         participants.forEach(name => {
-            if (name === sender) return;
+            if (name === sender) return;            
+            if (deadUsers.includes(name)) return;    
+
             const li = document.createElement("li");
             li.textContent = name;
             li.onclick = () => {
@@ -214,7 +299,9 @@ document.addEventListener("DOMContentLoaded",  async () => {
         document.getElementById("vote-modal").style.display = "flex";
     }
 
+
     function submitVote() {
+    	
         const selected = document.querySelector("#vote-list li.selected");
         if (!selected) {
             alert("투표 대상을 선택하세요.");
@@ -235,6 +322,8 @@ document.addEventListener("DOMContentLoaded",  async () => {
     }
 
     function endTimerNow() {
+    	console.log("조기 종료 버튼 클릭됨");
+    	document.getElementById("end-timer-btn").disabled = true;
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
             roomId: roomId,
             sender: sender,
@@ -244,15 +333,96 @@ document.addEventListener("DOMContentLoaded",  async () => {
     }
 
     function startDebate() {
-        document.getElementById("end-timer-btn").disabled = false;
-
+        
+		
         stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
             roomId: roomId,
             sender: sender,
             message: "",
             type: "START_TIME"
         }));
+        
     }
+    function showMafiaModal(participants,deadUsers) {
+    	deadUsers = deadUsers || [];
+        const voteList = document.getElementById("vote-list");
+        voteList.innerHTML = '';
+        
+        participants.forEach(name => {
+            if (name === sender) return;
+            if (deadUsers.includes(name)) return;  
+            const li = document.createElement("li");
+            li.textContent = name;
+            li.onclick = () => {
+                document.querySelectorAll("#vote-list li").forEach(el => el.classList.remove("selected"));
+                li.classList.add("selected");
+            };
+            voteList.appendChild(li);
+        });
+
+        document.querySelector("#vote-modal h3").textContent = "밤에 제거할 대상을 선택하세요";
+        document.querySelector(".vote-button").onclick = submitMafiaKill;
+        document.getElementById("vote-modal").style.display = "flex";
+    }
+    function submitMafiaKill() {
+        const selected = document.querySelector("#vote-list li.selected");
+        if (!selected) {
+            alert("대상을 선택하세요.");
+            return;
+        }
+
+        const target = selected.textContent;
+
+        stompClient.send("/app/chat.mafia/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: target,
+            type: "VOTE",
+            participants: latestParticipants
+        }));
+
+        document.getElementById("vote-modal").style.display = "none";
+    }
+    function showPoliceModal(participants,deadUsers) {
+    	deadUsers = deadUsers || [];
+        const voteList = document.getElementById("vote-list");
+        voteList.innerHTML = '';
+        participants.forEach(name => {
+            if (name === sender) return;
+            if (deadUsers.includes(name)) return;  
+            const li = document.createElement("li");
+            li.textContent = name;
+            li.onclick = () => {
+                document.querySelectorAll("#vote-list li").forEach(el => el.classList.remove("selected"));
+                li.classList.add("selected");
+            };
+            voteList.appendChild(li);
+        });
+        document.querySelector("#vote-modal h3").textContent = "조사할 대상을 선택하세요";
+        document.querySelector(".vote-button").onclick = submitPoliceCheck;
+        document.getElementById("vote-modal").style.display = "flex";
+    }
+
+    function submitPoliceCheck() {
+        const selected = document.querySelector("#vote-list li.selected");
+        if (!selected) {
+            alert("조사 대상을 선택하세요.");
+            return;
+        }
+
+        const target = selected.textContent;
+
+        stompClient.send("/app/chat.police/" + roomId, {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: target,
+            type: "VOTE",
+            participants: latestParticipants
+        }));
+
+        document.getElementById("vote-modal").style.display = "none";
+    }
+
 
     window.sendMessage = sendMessage;
     window.submitVote = submitVote;

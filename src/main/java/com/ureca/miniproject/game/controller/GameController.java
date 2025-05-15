@@ -4,6 +4,7 @@ import com.ureca.miniproject.common.ApiResponse;
 import com.ureca.miniproject.config.MyUserDetails;
 import com.ureca.miniproject.game.controller.request.EndGameRequest;
 import com.ureca.miniproject.game.service.GameService;
+import com.ureca.miniproject.game.service.response.EndStatusResponse;
 import com.ureca.miniproject.game.service.response.ListGameResultResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -52,5 +53,14 @@ public class GameController {
         return ResponseEntity
                 .status(GAME_RESULT_LIST_READ_SUCCESS.getStatus())
                 .body(ApiResponse.of(GAME_RESULT_LIST_READ_SUCCESS, listGameResultResponse));
+    }
+
+    @GetMapping("/{roomId}/is-ended")
+    public ResponseEntity<ApiResponse<EndStatusResponse>> isGameEnded(@PathVariable("roomId") Long roomId) {
+        EndStatusResponse endStatusResponse = gameService.isGameEnded(roomId);
+
+        return ResponseEntity
+                .status(GAME_END_STATUS_CHECK_SUCCESS.getStatus())
+                .body(ApiResponse.of(GAME_END_STATUS_CHECK_SUCCESS, endStatusResponse));
     }
 }

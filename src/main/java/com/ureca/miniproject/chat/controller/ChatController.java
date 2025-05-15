@@ -28,7 +28,7 @@ public class ChatController {
 
         String username = principal.getName();
         message.setSender(username);
-        
+        System.out.println("WebSocket 연결 사용자: " + principal.getName());
         switch (message.getType()) {
 	        case ENTER -> {
 	

@@ -25,8 +25,6 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
 	Boolean existsByFriendIdInviteeIdAndStatus(Long id,Status status);
 	Boolean existsByFriendIdInviterIdAndStatus(Long id,Status status);
 	
-	List<Friend> findByFriendId(FriendId friendId);
-	List<Friend> findByFriendIdInviteeIdAndStatus(Long id, Status status);
 
 //	List<Friend> findByFriendIdInviteeIdOrFriendIdInviterIdAndStatus(Long id1,Long id2, Status status);
 	//괄호가 명확하게 설정되지 않아서 jpql(아래)로 변경 
@@ -40,7 +38,7 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
 	
 	
 	@Query("SELECT f FROM Friend f WHERE (f.friendId.invitee.email = :userEmail AND f.friendId.inviter.email = :friendEmail) OR (f.friendId.inviter.email = :userEmail AND f.friendId.invitee.email = :friendEmail)")
-	List<Friend> findFriends(@Param("userEmail") String userEmail ,@Param("friendEmail") String friendEmail);
+	List<Friend> findFriendsByEmail(@Param("userEmail") String userEmail ,@Param("friendEmail") String friendEmail);
 	
 	
 	@Query("SELECT f FROM Friend f WHERE ((f.friendId.invitee.email = :userEmail AND f.friendId.inviter.email = :friendEmail) OR (f.friendId.inviter.email = :userEmail AND f.friendId.invitee.email = :friendEmail)) AND f.status = :status")

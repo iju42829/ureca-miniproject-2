@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 public enum BaseCode {
 	// COMMON
 	INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR_500",HttpStatus.INTERNAL_SERVER_ERROR,"예기치 못한 오류가 발생했습니다"),
+    STATUS_OK("STATUS_OK_200", HttpStatus.OK, "서버가 정상적으로 동작 중입니다."),
+    STATUS_AUTHENTICATED("STATUS_AUTHENTICATED_200", HttpStatus.OK, "로그인된 사용자입니다."),
+    STATUS_UNAUTHORIZED("STATUS_UNAUTHORIZED_401", HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
+
     // USER
     USER_CREATE_SUCCESS("CREATE_USER_201", HttpStatus.CREATED, "회원 정보가 성공적으로 등록되었습니다."),
     USER_FIND_SUCCESS("FIND_USER_201", HttpStatus.CREATED, "회원 정보를 성공적으로 가져왔습니다."),
@@ -33,6 +37,7 @@ public enum BaseCode {
     GAME_ROOM_DELETE_SUCCESS("DELETE_GAME_ROOM_200", HttpStatus.OK, "게임방이 성공적으로 삭제되었습니다."),
     GAME_ROOM_CAPACITY_EXCEEDED("GAME_ROOM_CAPACITY_EXCEEDED_400", HttpStatus.BAD_REQUEST, "게임방 참여 인원이 최대치를 초과했습니다."),
     GAME_ROOM_START_SUCCESS("START_GAME_ROOM_200", HttpStatus.OK, "게임이 성공적으로 시작되었습니다."),
+    GAME_ROOM_NOT_ENOUGH_PARTICIPANTS("GAME_ROOM_NOT_ENOUGH_PARTICIPANTS_400", HttpStatus.BAD_REQUEST, "게임을 시작하려면 최소 3명 이상의 참여자가 필요합니다."),
 
     // GAME_PARTICIPANT
     GAME_PARTICIPANT_ALREADY_JOINED("ALREADY_JOINED_GAME_PARTICIPANT_409", HttpStatus.CONFLICT, "이미 참여 중인 게임방이 있습니다."),
@@ -44,7 +49,11 @@ public enum BaseCode {
 
     // GAME_RESULT
     GAME_RESULT_CREATE_SUCCESS("CREATE_GAME_RESULT_201", HttpStatus.CREATED, "게임 전적 저장에 성공했습니다."),
-    GAME_RESULT_LIST_READ_SUCCESS("READ_LIST_GAME_RESULT_200", HttpStatus.OK, "게임 전적 목록 조회에 성공했습니다.");
+    GAME_RESULT_LIST_READ_SUCCESS("READ_LIST_GAME_RESULT_200", HttpStatus.OK, "게임 전적 목록 조회에 성공했습니다."),
+
+    // GAME
+    GAME_END_STATUS_CHECK_SUCCESS("CHECK_GAME_END_STATUS_200", HttpStatus.OK, "게임 종료 여부 확인에 성공했습니다.");
+
 
     private final String code;
     private final HttpStatus status;

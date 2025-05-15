@@ -1,79 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+    <meta charset="UTF-8">
+    <title>로그인</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+
+        form {
+            background-color: #2a2a2a;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            width: 320px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 6px;
+            background-color: #3a3a3a;
+            color: #fff;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #error-message {
+            color: #f66;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-	<h1>Login</h1>
-    <hr>
-    
-    <div>
+<div class="container">
+    <h1>로그인</h1>
 
+    <form id="loginForm">
+        <label for="email">이메일</label>
         <input type="text" id="email" name="email" required value="test1@naver.com">
-    </div>
-    <div>
+
+        <label for="password">비밀번호</label>
         <input type="password" id="password" name="password" required value="1234">
 
-    </div>
-    
-    <!-- Add hidden input for CSRF token -->
-    <input type="hidden" name="_csrf" value="" id="_csrf"> 
-    <!-- 나와 내서버에서 왔다갔다 하는 것이 아닌 다른 것이 인척 하는 것을 csrf 라고 하는데 그것을 막아주는 것이 security의 핵심 기능 -->
-    <!-- 우리는 접근하면 token을 클라이언트와 서버에 준다. 그러면 위변조하려는 애가 token을 몰라서 token을 모르면 버그를 낸다.-->
-    <!-- 이제 이거는 받았을 때 받은 것을 이것도 저장을 한 거를 이걸 통해서 같이 날라가게끔 하려고  -->
-    
-    
-    <button id="btnLogin" type="submit">Login</button>
-    
-    
-    <div id="error-message" style="color: red; margin-top: 10px;"></div> 
-<!-- 이 div 안에 뭔가 들어모면 이게 출력되는 것. -->
+        <input type="hidden" name="_csrf" id="_csrf" value="">
+
+        <button type="submit" id="btnLogin">로그인</button>
+
+        <div id="error-message"></div>
+    </form>
+</div>
 
 <script>
-	window.onload=function(){
-		getCsrfToken();
-		
-		document.querySelector("#btnLogin").onclick=login;
-	}
-	async function getCsrfToken(){
-	    let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
-	    let data = await response.json();
-	    document.querySelector('#_csrf').value = data.token;
-	    console.log(data.token);
-	}
-	
-	async function login(){
-	    // parameter, value
-	    //spring security에서 제공하는 UserDetailsService에서 'loadByUsername'으로 받기 때문에 username으로 전송, 실제 값은 email로 custom
-	    let username = document.querySelector("#email").value;
-	    let password = document.querySelector("#password").value;
-	    let _csrf = document.querySelector("#_csrf").value;
-	    
-	    let urlParams = new URLSearchParams({
-	        username, password, _csrf
-	    });
-	    
-	    // url
-	    let url = "/login";
-	    
-	    // post, parameter
-	    let fetchOptions = {
-	        method: "POST",
-	        body:urlParams
-	    }
-	    
-	    let response = await fetch(url, fetchOptions);
-	    let data = await response.json();
-	    
-	    console.log(data);
-	    
-	    if (data.result == "success") {
-	        window.location.href = '/Game/gameRoomList.html';
-	    } else {
-	        document.getElementById('error-message').innerText = 'username 또는 password 가 올바르지 않습니다.';
-	    }
-	}
+    $(document).ready(function () {
+        getCsrfToken();
+
+        $('#loginForm').submit(function (e) {
+            e.preventDefault();
+            login();
+        });
+
+        async function getCsrfToken() {
+            let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
+            let data = await response.json();
+            $('#_csrf').val(data.token);
+        }
+
+        async function login() {
+            let username = $('#email').val();
+            let password = $('#password').val();
+            let _csrf = $('#_csrf').val();
+
+            let urlParams = new URLSearchParams({
+                username, password, _csrf
+            });
+
+            let response = await fetch("/login", {
+                method: "POST",
+                body: urlParams
+            });
+
+            let data = await response.json();
+
+            if (data.result === "success") {
+                window.location.href = 'index.html';
+            } else {
+                $('#error-message').text('username 또는 password 가 올바르지 않습니다.');
+            }
+        }
+    });
 </script>
 </body>
 </html>

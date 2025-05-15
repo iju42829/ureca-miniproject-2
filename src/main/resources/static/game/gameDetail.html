@@ -6,26 +6,170 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <style>
-        .btn { padding: 8px 12px; margin: 4px; cursor: pointer; }
-        .btn-leave { background: #f66; color: #fff; }
-        .btn-delete { background: #c00; color: #fff; }
-        .btn-start  { background: #6c6; color: #fff; }
+        body {
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .room-info-box {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .room-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .room-count {
+            font-size: 16px;
+            color: #ccc;
+        }
+
+        h3 {
+            margin-top: 40px;
+            font-size: 20px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 6px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .participant-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2e2e2e;
+            padding: 12px 16px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .participant-id-name {
+            font-weight: bold;
+            color: #f0f0f0;
+        }
+
+        .participant-status {
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background-color: #555;
+            color: #fff;
+        }
+
+        .participant-status.WAITING {
+            background-color: #777;
+        }
+
+        .participant-status.READY {
+            background-color: #4caf50;
+        }
+
+        .participant-status.PLAYING {
+            background-color: #2196f3;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            margin: 6px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-leave {
+            background-color: #f66;
+            color: #fff;
+        }
+
+        .btn-leave:hover {
+            background-color: #d44;
+        }
+
+        .btn-delete {
+            background-color: #c00;
+            color: #fff;
+        }
+
+        .btn-delete:hover {
+            background-color: #a00;
+        }
+
+        .btn-start {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        .btn-start:hover {
+            background-color: #45a049;
+        }
+
+        #actionBtn {
+            margin-top: 30px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-<h1 id="roomTitle">로딩 중...</h1>
-<p id="roomInfo"></p>
+<div class="container">
+    <div class="room-info-box">
+        <div class="room-title" id="roomTitle">로딩 중...</div>
+        <div class="room-count" id="roomInfo">인원: --/--</div>
+    </div>
 
-<h3>참여자</h3>
-<ul id="participantList"></ul>
+    <h3>참여자</h3>
+    <ul id="participantList"></ul>
 
-<div id="actionBtn"></div>
+    <div id="actionBtn"></div>
 
-<!-- CSRF 토큰 보관용 히든 필드 -->
-<input type="hidden" id="_csrf" value="">
-<input type="hidden" id="_csrf_header" value="">
+    <!-- CSRF 토큰 보관용 히든 필드 -->
+    <input type="hidden" id="_csrf" value="">
+    <input type="hidden" id="_csrf_header" value="">
+    <!-- 게임방 초대 버튼 -->
+    <button id="openInviteModal">초대하기</button>
+    <!-- 게임방 초대 모달 -->
+	<div id="inviteModal" class="modal" style="display:none;">
+	    <div class="modal-content">
+	        <span class="close-btn">&times;</span>
+	        <iframe src="../user/inviteGameRoom.html" width="100%" height="600px" style="border: none;"></iframe>
+	    </div>
+	</div>
+</div>
+
+
 
 <script>
+
+	//게임방 초대 모달 열기/닫기
+	document.getElementById("openInviteModal").onclick = function () {
+	    document.getElementById("inviteModal").style.display = "block";
+	};
+	
+	document.querySelector(".close-btn").onclick = function () {
+	    document.getElementById("inviteModal").style.display = "none";
+	};
+
     $(function() {
         let csrfToken, csrfHeader;
 
@@ -60,7 +204,7 @@
                     const d = res.data;
 
                     if (d.gameRoomStatus === 'PLAYING') {
-                    	sessionStorage.setItem("roomId", roomId);
+                        sessionStorage.setItem("roomId", roomId);
                         return window.location.href = '/chat/chat.html';
                     }
 
@@ -72,7 +216,13 @@
                         $ul.append('<li>참여자가 없습니다.</li>');
                     } else {
                         d.participantResponseList.forEach(p => {
-                            $ul.append(`<li>[${p.id}] ${p.name} — 상태: ${p.status}</li>`);
+                            const cardHtml = `
+                                <li class="participant-card">
+                                    <div class="participant-id-name">${p.name}</div>
+                                    <div class="participant-status ${p.status}">${p.status}</div>
+                                </li>
+                            `;
+                            $ul.append(cardHtml);
                         });
                     }
 
@@ -92,6 +242,7 @@
                 .fail(xhr => {
                     $('#participantList').empty()
                         .append(`<li>데이터 로드 실패: ${xhr.status}</li>`);
+                    window.location.href = '/game/gameRoomList.html';
                 });
         }
 
@@ -124,9 +275,9 @@
 
         function startGame(roomId) {
             if (!confirm('게임을 시작하시겠습니까?')) return;
-            
+
             sessionStorage.setItem("roomId", roomId);
-            
+
             $.ajax({
                 url: `/api/games/${roomId}/start`,
                 type: 'POST',
@@ -134,7 +285,6 @@
             })
                 .done(() => {
                     alert('게임이 시작되었습니다.');
-                    // 예: 실제 플레이 페이지로 이동
                     window.location.href = '/chat/chat.html';
                 })
                 .fail(xhr => alert(`게임 시작 실패: ${xhr.status}`));

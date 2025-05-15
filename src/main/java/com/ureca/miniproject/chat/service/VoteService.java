@@ -26,7 +26,12 @@ public class VoteService {
         Map<String, Integer> roomVotes = voteCounts.get(roomId);
         
         roomVotes.put(votedUser, roomVotes.getOrDefault(votedUser, 0) + 1);
-
+        System.out.println("[투표 현황] roomId: " + roomId);
+        System.out.println("  - 총 투표 수: " + totalVotes.get(roomId));
+        System.out.println("  - 개별 득표 수:");
+        for (Map.Entry<String, Integer> entry : roomVotes.entrySet()) {
+            System.out.println("    > " + entry.getKey() + ": " + entry.getValue());
+        }
         int majority = participantCount / 2 + 1;
 
         for (Map.Entry<String, Integer> entry : roomVotes.entrySet()) {
@@ -40,7 +45,9 @@ public class VoteService {
 
         return null;
     }
-
+    public int getTotalVotes(String roomId) {
+        return totalVotes.getOrDefault(roomId, 0);
+    }
     public void clearVotes(String roomId) {
         voteCounts.remove(roomId);
         totalVotes.remove(roomId);

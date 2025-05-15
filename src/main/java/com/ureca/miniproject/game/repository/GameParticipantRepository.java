@@ -26,7 +26,24 @@ public interface GameParticipantRepository extends JpaRepository<GameParticipant
     	      AND gp.role = 'MAFIA'
     	      AND gp.status = 'JOINED'
     	""")
-    	List<String> findMafiaUsernamesByRoomId(@Param("roomId") Long roomId);
-
+    List<String> findMafiaUsernamesByRoomId(@Param("roomId") Long roomId);
+    @Query("""
+    	    SELECT gp.user.userName 
+    	    FROM GameParticipant gp
+    	    WHERE gp.gameRoom.id = :roomId
+    	      AND gp.role = 'POLICE'
+    	      AND gp.status = 'JOINED'
+    	""")
+    List<String> findPoliceUsernamesByRoomId(@Param("roomId") Long roomId);
+    @Query(value = """
+    	    SELECT u.user_name
+    	    FROM game_participant gp
+    	    JOIN users u ON gp.user_id = u.id
+    	    WHERE gp.game_room_id = :roomId
+    	      AND gp.role = 'POLICE'
+    	      AND gp.status = 'JOINED'
+    	      AND gp.is_alive = 1
+    	""", nativeQuery = true)
+    List<String> findAlivePoliceUsernamesByRoomId(@Param("roomId") Long roomId);
 
 }

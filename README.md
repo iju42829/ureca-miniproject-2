@@ -39,7 +39,7 @@
 ## ERD (Entity Relationship Diagram)
 
 DB 관계도는 다음과 같습니다.
-
+![ERD](https://github.com/user-attachments/assets/8fdae029-077c-4c43-b89a-611cf941381e)
 ## 프로젝트 실행 방법
 
 ### 1. `.env` 파일 생성

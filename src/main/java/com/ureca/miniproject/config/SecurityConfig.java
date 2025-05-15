@@ -25,6 +25,7 @@ public class SecurityConfig {
 			 .authorizeHttpRequests(
 					 authz -> {
 					 authz.requestMatchers(
+							 "/api/status/**",
 					    "/",
 					    "/chat/**",
 						"/index.html",

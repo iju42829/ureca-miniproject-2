@@ -71,4 +71,12 @@ public class GameControllerAdvice {
         return ResponseEntity.status(e.getBaseCode().getStatus())
                 .body(ApiResponse.of(e.getBaseCode(), null));
     }
+
+    @ExceptionHandler(NotEnoughParticipantsException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotEnoughParticipantsException(NotEnoughParticipantsException e) {
+        log.warn("[exceptionHandle] ex", e);
+
+        return ResponseEntity.status(e.getBaseCode().getStatus())
+                .body(ApiResponse.of(e.getBaseCode(), null));
+    }
 }

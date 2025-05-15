@@ -1,54 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"
-            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-            crossorigin="anonymous"></script>
+	<meta charset="UTF-8">
+	<title>마피아 게임 홈</title>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+			integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+			crossorigin="anonymous"></script>
+	<style>
+		body {
+			background-color: #1e1e1e;
+			color: #f0f0f0;
+			font-family: 'Arial', sans-serif;
+			margin: 0;
+			padding: 40px;
+		}
+
+		.container {
+			max-width: 600px;
+			margin: auto;
+		}
+
+		.title {
+			font-size: 28px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 30px;
+		}
+
+		.menu {
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+		}
+
+		.card {
+			background-color: #2a2a2a;
+			padding: 20px;
+			border-radius: 12px;
+			text-align: center;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+			text-decoration: none;
+			color: #f0f0f0;
+			font-size: 18px;
+			transition: background-color 0.2s;
+		}
+
+		.card:hover {
+			background-color: #3a3a3a;
+		}
+
+		.btn-logout {
+			background-color: #f66;
+			color: #fff;
+			padding: 12px;
+			border: none;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: 16px;
+			transition: background-color 0.2s;
+		}
+
+		.btn-logout:hover {
+			background-color: #d44;
+		}
+	</style>
 </head>
 <body>
-	<a href="friend/inviteFriend.html">친구관리</a>
-	<a href="game/createGameRoom.html">게임 시작</a>
-	<a href="game/createGameRoom.html">진행 중인 게임 참가</a>
-	<a href="login.html">login</a>
-	<a href="register.html">signup</a>
-	<a href="#" onclick="submitLogoutForm(); return false;">로그아웃</a>
-	
+<div class="container">
+	<div class="title">마피아 게임</div>
+
+	<div class="menu">
+		<a href="friend/inviteFriend.html" class="card">친구 관리</a>
+		<a href="game/createGameRoom.html" class="card">게임 생성</a>
+		<a href="game/gameRoomList.html" class="card">게임 목록</a>
+		<a href="login.html" class="card">로그인</a>
+		<a href="register.html" class="card">회원가입</a>
+		<button class="btn-logout" onclick="submitLogoutForm(); return false;">로그아웃</button>
+	</div>
+
 	<!-- 숨겨진 로그아웃 폼 -->
 	<form id="logoutForm" action="/my/logout" method="POST" style="display: none;">
-	  <input type="hidden" name="_csrf" id="csrfToken">
+		<input type="hidden" name="_csrf" id="csrfToken">
 	</form>
-	<script>
-function setCsrfToken() {
-    return fetch('/csrf-token', {
-        method: 'GET',
-        credentials: 'same-origin'
-    })
-    .then(res => res.json())
-    .then(data => {
-        $('#csrfToken').val(data.token);
-        return data.token;
-    })
-    .catch(err => {
-        console.error("CSRF 토큰 불러오기 실패", err);
-        return null;
-    });
-}
+</div>
 
-async function submitLogoutForm() {
-    const token = await setCsrfToken();
-    if (token) {
-        document.getElementById('logoutForm').submit();
-    } else {
-        alert("CSRF 토큰을 찾을 수 없습니다. 페이지를 새로고침 해보세요.");
-    }
-}
+<script>
+	function setCsrfToken() {
+		return fetch('/csrf-token', {
+			method: 'GET',
+			credentials: 'same-origin'
+		})
+				.then(res => res.json())
+				.then(data => {
+					$('#csrfToken').val(data.token);
+					return data.token;
+				})
+				.catch(err => {
+					console.error("CSRF 토큰 불러오기 실패", err);
+					return null;
+				});
+	}
 
-$(document).ready(function () {
-    setCsrfToken();
-});
+	async function submitLogoutForm() {
+		const token = await setCsrfToken();
+		if (token) {
+			document.getElementById('logoutForm').submit();
+		} else {
+			alert("CSRF 토큰을 찾을 수 없습니다. 페이지를 새로고침 해보세요.");
+		}
+	}
+
+	$(document).ready(function () {
+		setCsrfToken();
+	});
 </script>
-
 </body>
 </html>

@@ -1,78 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+    <meta charset="UTF-8">
+    <title>회원가입</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+
+        form {
+            background-color: #2a2a2a;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            width: 320px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 6px;
+            background-color: #3a3a3a;
+            color: #fff;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #error-message {
+            color: #f66;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-    <h1>register.html</h1>
-    
-    <div>
-        name : <input type="text" name="name" id="name">
-    </div>
-    <div>
-        email : <input type="text" name="email" id="email">
-    </div>
-    <div>
-        password : <input type="password" name="password" id="password">
-    </div>
-    
-    <!-- Add hidden input for CSRF token -->
-    <!-- id 는 _ 시작 X -->
-    <input type="hidden" name="_csrf" value="" id="_csrf">
-    
-    <button id="btnRegister">회원가입</button>
-    
+<div class="container">
+    <h1>회원가입</h1>
+
+    <form id="registerForm">
+        <label for="name">이름</label>
+        <input type="text" name="name" id="name" required>
+
+        <label for="email">이메일</label>
+        <input type="text" name="email" id="email" required>
+
+        <label for="password">비밀번호</label>
+        <input type="password" name="password" id="password" required>
+
+        <input type="hidden" name="_csrf" value="" id="_csrf">
+
+        <button type="submit" id="btnRegister">회원가입</button>
+
+        <div id="error-message"></div>
+    </form>
+</div>
+
 <script>
-    window.onload = function(){
+    $(document).ready(function () {
         getCsrfToken();
-        
-        document.querySelector("#btnRegister").onclick = register;
-    }
-    
-    async function getCsrfToken(){
-        let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
-        let data = await response.json();
-        document.querySelector('#_csrf').value = data.token;
-    }
-    
-    async function register(){
-        // parameter, value
-        let userName = document.querySelector("#name").value;
-        let email = document.querySelector("#email").value;
-        let password = document.querySelector("#password").value;
-        let _csrf = document.querySelector("#_csrf").value;
-        
-        console.log(userName, email, password, _csrf);
-        
-        let urlParams = new URLSearchParams({
-        	userName, email, password, _csrf
+
+        $('#registerForm').submit(function (e) {
+            e.preventDefault();
+            register();
         });
-        
-        // url
-        let url = "api/auth/signup";
-        
-        // post, parameter
-        let fetchOptions = {
-            method: "POST",
-            body:urlParams
+
+        async function getCsrfToken() {
+            let response = await fetch('/csrf-token', { method: 'GET', credentials: 'same-origin' });
+            let data = await response.json();
+            $('#_csrf').val(data.token);
         }
-        
-        let response = await fetch(url, fetchOptions);
-        let data = await response.json()
-        console.log(response.status)
-        if (response.status === 200) {
-            alert("회원가입 되었습니다. 로그인 페이지로 이동합니다.");
-            window.location.href = "/login";
-        } else if (response.status === 409) {
-            alert("이미 등록된 이메일입니다.");
-        } else if (response.status === 500) {
-            alert("회원가입 과정에서 오류가 발생했습니다.");
-        } else {
-            alert("알 수 없는 오류가 발생했습니다.");
+
+        async function register() {
+            let userName = $('#name').val();
+            let email = $('#email').val();
+            let password = $('#password').val();
+            let _csrf = $('#_csrf').val();
+
+            const urlParams = new URLSearchParams({ userName, email, password, _csrf });
+
+            let response = await fetch("api/auth/signup", {
+                method: "POST",
+                body: urlParams
+            });
+
+            const data = await response.json();
+
+            if (response.status === 200) {
+                alert("회원가입 되었습니다. 로그인 페이지로 이동합니다.");
+                window.location.href = "/login";
+            } else if (response.status === 409) {
+                $('#error-message').text("이미 등록된 이메일입니다.");
+            } else if (response.status === 500) {
+                $('#error-message').text("회원가입 과정에서 오류가 발생했습니다.");
+            } else {
+                $('#error-message').text("알 수 없는 오류가 발생했습니다.");
+            }
         }
-        
-    }
-</script> 
+    });
+</script>
 </body>
 </html>

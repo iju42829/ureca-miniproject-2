@@ -12,7 +12,7 @@
 |--------|----------------|-------------------|----------------------------------------------------|
 | 이재윤 | 백엔드 (팀장)   | 게임 비즈니스 로직        | [iju42829](https://github.com/iju42829)         |
 | 김정민 | 백엔드 (팀원)   | 회원가입/로그인, 친구 비즈니스 로직 | [jmk445](https://github.com/jmk445)        |
-| 손민혁 | 백엔드 (팀원)   | webSocket 기반 채팅   | [Sonminhyeok](https://github.com/Sonminhyeok)               |
+| 손민혁 | 백엔드 (팀원)   | webSocket 기반 채팅/STATE_MACHINE   | [Sonminhyeok](https://github.com/Sonminhyeok)               |
 
 ## 기술 스택
 

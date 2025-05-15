@@ -20,6 +20,8 @@ import com.ureca.miniproject.chat.dto.GameState;
 import com.ureca.miniproject.chat.tool.ChatRoomUserTool;
 import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
+import com.ureca.miniproject.game.service.GameService;
+import com.ureca.miniproject.game.service.response.EndStatusResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +31,7 @@ public class StateManager {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatRoomUserTool chatRoomUserTool;
-    
+    private final GameService gameService;
     private final GameParticipantRepository gameParticipantRepository;
     private final Map<String, GameState> roomStates = new ConcurrentHashMap<>();
     private final Map<String, Long> debateStartTimes = new ConcurrentHashMap<>();
@@ -102,7 +104,8 @@ public class StateManager {
     }
     public void startNight(String roomId) {
     	System.out.println("밤 시작");
-        roomStates.put(roomId, GameState.NIGHT);
+    	if (getGameState(roomId) == GameState.END) return;
+    	else roomStates.put(roomId, GameState.NIGHT);
         
         ChatMessage nightMsg = new ChatMessage();
         nightMsg.setRoomId(roomId);
@@ -128,7 +131,30 @@ public class StateManager {
 
     }
 
-    
+    public void checkAndEndGame(String roomId) {
+        EndStatusResponse endStatus = gameService.isGameEnded(Long.parseLong(roomId));
+        System.out.println("check");
+        if (!"NONE".equals(endStatus.getEndStatus())) {
+            roomStates.put(roomId, GameState.END);
+
+            ChatMessage endMsg = new ChatMessage();
+            endMsg.setRoomId(roomId);
+            endMsg.setSender("SYSTEM");
+            endMsg.setType(ChatMessage.MessageType.SYSTEM);
+            endMsg.setParticipants(chatRoomUserTool.getUsers(roomId));
+            endMsg.setDeadUsers(getDeadUsers(roomId));
+            endMsg.setId(UUID.randomUUID().toString());
+
+            if ("MAFIA".equals(endStatus.getEndStatus())) {
+                endMsg.setMessage("마피아 승리!");
+            } else if ("CITIZEN".equals(endStatus.getEndStatus())) {
+                endMsg.setMessage("시민 승리!");
+            }
+
+            messagingTemplate.convertAndSend("/topic/chat/" + roomId, endMsg);
+            saveChat(roomId, endMsg);
+        }
+    }
     public void saveChat(String roomId, ChatMessage message) {
     	if (message.getDeadUsers() == null) {
             message.setDeadUsers(getDeadUsers(roomId));

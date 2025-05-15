@@ -134,12 +134,12 @@ public class GameServiceImpl implements GameService {
                 .filter(p -> p.getRole() == CITIZEN)
                 .count();
 
-        if (aliveCitizen == 0) {
-            return new EndStatusResponse(EndStatus.MAFIA.name());
+        if (aliveMafia == 0) {
+            return new EndStatusResponse(EndStatus.CITIZEN.name());
         }
 
         if (aliveCitizen == 1 && aliveMafia == 1) {
-            return new EndStatusResponse(EndStatus.CITIZEN.name());
+            return new EndStatusResponse(EndStatus.MAFIA.name());
         }
 
         return new EndStatusResponse(EndStatus.NONE.name());

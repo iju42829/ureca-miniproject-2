@@ -8,6 +8,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import com.ureca.miniproject.chat.dto.ChatMessage;
+import com.ureca.miniproject.chat.dto.GameState;
 import com.ureca.miniproject.chat.dto.VoteResultDto;
 import com.ureca.miniproject.chat.service.StateManager;
 import com.ureca.miniproject.chat.service.VoteService;
@@ -24,9 +25,11 @@ public class VoteController {
 
     @MessageMapping("/chat.vote/{roomId}")
     public void vote(@DestinationVariable("roomId") String roomId, @Payload ChatMessage message) {
+    	if (stateManager.getGameState(roomId) == GameState.END) return;
+
         int participantCount = message.getParticipants().size();
         VoteResultDto resultDto = voteService.recordVote(roomId, message.getMessage(), participantCount);
-
+        
         ChatMessage resultMessage = new ChatMessage();
         resultMessage.setRoomId(roomId);
         resultMessage.setSender("SYSTEM");
@@ -55,6 +58,7 @@ public class VoteController {
 
             if (resultDto.isDecided()) {
                 shouldStartNight = true;
+                stateManager.checkAndEndGame(roomId);
             }
         }
 

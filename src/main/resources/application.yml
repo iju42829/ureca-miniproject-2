@@ -1,27 +1,41 @@
+#spring:
+#  application:
+#    name: miniproject
+#
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: ${DB_URL}
+#    username: ${DB_USERNAME}
+#    password: ${DB_PASSWORD}
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    
+#
+#    open-in-view: false
+#
+#logging:
+#  level:
+#    com:
+#      ureca:
+#        miniproject: debug
+#
+#    org.hibernate.SQL: debug
+#    org:
+#      springframework:
+#        security: debug
+
 spring:
-  application:
-    name: miniproject
-
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
   jpa:
     hibernate:
-      ddl-auto: update
-    
-
-    open-in-view: false
-
-logging:
-  level:
-    com:
-      ureca:
-        miniproject: debug
-
-    org.hibernate.SQL: debug
-    org:
-      springframework:
-        security: debug
+      ddl-auto: create-drop
+    show-sql: true
+  h2:
+    console:
+      enabled: true

@@ -27,6 +27,7 @@ public class VoteController {
         if (stateManager.getGameState(roomId) == GameState.END) return;
 
         int participantCount = message.getParticipants().size();
+        participantCount-=stateManager.getDeadUsers(roomId).size();
         String sender = message.getSender();
         VoteResultDto resultDto = voteService.recordVote(roomId, message.getMessage(), participantCount);
 

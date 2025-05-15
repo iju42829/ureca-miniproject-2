@@ -36,13 +36,14 @@ public class VoteService {
         for (Map.Entry<String, Integer> entry : roomVotes.entrySet()) {
             if (entry.getValue() >= majority) {
                 VoteResultDto result = new VoteResultDto(entry.getKey(), true, "VOTE_RESULT");
-                pendingVoteResults.put(roomId, result); 
-                return null;
+                pendingVoteResults.put(roomId, result);
+                return null; 
             }
         }
 
-        return new VoteResultDto(null, false, "VOTE_RESULT");
-
+        VoteResultDto undecidedResult = new VoteResultDto(null, false, "VOTE_RESULT");
+        pendingVoteResults.put(roomId, undecidedResult);
+        return null;
     }
 
     public boolean isVoteComplete(String roomId, int participantCount) {

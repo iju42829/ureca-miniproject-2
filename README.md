@@ -63,7 +63,7 @@ docker-compose up --build
 ## 실행화면
 
 
-![화면 캡처 2025-05-16 140512](https://github.com/user-attachments/assets/0e60b042-7b9c-42a0-9558-db05616a3b77)
+![화면 캡처 2025-05-16 140512](https://github.com/user-attachments/assets/def5494f-c87b-4c37-8e2d-4435f86a5ad8)
 ![화면 캡처 2025-05-16 140549](https://github.com/user-attachments/assets/0272909c-7e65-4aef-aeac-a9049aae1370)
 ![화면 캡처 2025-05-16 141016](https://github.com/user-attachments/assets/dff6e28e-8c6d-4853-9493-a069c2bb3af5)
 ![화면 캡처 2025-05-16 141028](https://github.com/user-attachments/assets/322ae9e5-9b7f-43e6-abf4-88d2a91e64c5)

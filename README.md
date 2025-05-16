@@ -58,3 +58,21 @@ DB_URL=
 ```
 docker-compose up --build
 ```
+
+
+## 실행화면
+
+
+![화면 캡처 2025-05-16 140512](https://github.com/user-attachments/assets/0e60b042-7b9c-42a0-9558-db05616a3b77)
+![화면 캡처 2025-05-16 140549](https://github.com/user-attachments/assets/0272909c-7e65-4aef-aeac-a9049aae1370)
+![화면 캡처 2025-05-16 141016](https://github.com/user-attachments/assets/dff6e28e-8c6d-4853-9493-a069c2bb3af5)
+![화면 캡처 2025-05-16 141028](https://github.com/user-attachments/assets/322ae9e5-9b7f-43e6-abf4-88d2a91e64c5)
+![화면 캡처 2025-05-16 141104](https://github.com/user-attachments/assets/d8bcf36b-fec1-4e71-899d-a6fa745a808a)
+![화면 캡처 2025-05-16 141152](https://github.com/user-attachments/assets/1c079875-7b95-448f-a80b-ee03d84e07e4)
+![화면 캡처 2025-05-16 141227](https://github.com/user-attachments/assets/a1305aa9-3054-4f23-bdd7-4201c923cac8)
+![화면 캡처 2025-05-16 141244](https://github.com/user-attachments/assets/b6845bf5-bed2-45d8-ab2a-f8c257323318)
+![화면 캡처 2025-05-16 141308](https://github.com/user-attachments/assets/7267345a-12dc-4d23-9b07-e378e356a464)
+![화면 캡처 2025-05-16 141426](https://github.com/user-attachments/assets/9ec2cf54-751b-490a-8719-3c045ff0e4e1)
+![화면 캡처 2025-05-16 141459](https://github.com/user-attachments/assets/d13fa73d-d7c9-43bb-9796-91cdc9958ab4)
+![화면 캡처 2025-05-16 141511](https://github.com/user-attachments/assets/1de8d9d5-ce7a-463a-a91c-0852c27bc833)
+

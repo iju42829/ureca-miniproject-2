@@ -55,6 +55,7 @@ public class NightController {
         resultMessage.setMessage(target + "님의 직업은 [" + role + "]입니다.");
         resultMessage.setParticipants(message.getParticipants());
         resultMessage.setId(UUID.randomUUID().toString());
+        System.out.println(resultMessage);
         stateManager.setPoliceActed(roomId);
         stateManager.checkNightActions(roomId);
         stateManager.sendPoliceResultToSender(message.getSender(), roomId, resultMessage);

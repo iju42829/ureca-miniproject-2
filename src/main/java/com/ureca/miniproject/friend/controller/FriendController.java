@@ -74,4 +74,5 @@ public class FriendController {
 				.of(FRIEND_LIST_SUCCESS,result ));
 	}	
 		
+		
 }

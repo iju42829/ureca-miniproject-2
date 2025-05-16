@@ -148,28 +148,13 @@
     <input type="hidden" id="_csrf_header" value="">
     <!-- 게임방 초대 버튼 -->
     <button id="openInviteModal">초대하기</button>
-    <!-- 게임방 초대 모달 -->
-	<div id="inviteModal" class="modal" style="display:none;">
-	    <div class="modal-content">
-	        <span class="close-btn">&times;</span>
-	        <iframe src="../user/inviteGameRoom.html" width="100%" height="600px" style="border: none;"></iframe>
-	    </div>
-	</div>
+    
 </div>
 
 
 
 <script>
-
-	//게임방 초대 모달 열기/닫기
-	document.getElementById("openInviteModal").onclick = function () {
-	    document.getElementById("inviteModal").style.display = "block";
-	};
 	
-	document.querySelector(".close-btn").onclick = function () {
-	    document.getElementById("inviteModal").style.display = "none";
-	};
-
     $(function() {
         let csrfToken, csrfHeader;
 
@@ -186,7 +171,15 @@
                 // 즉시 한 번 로드
                 loadRoomDetail();
             });
-
+        $('#openInviteModal').on('click', function () {
+            const params = new URLSearchParams(window.location.search);
+            const roomId = params.get('roomId');
+            if (!roomId) {
+                alert('roomId가 없습니다.');
+                return;
+            }
+            window.location.href = `/page/gameDetail/invite?roomId=${roomId}`;
+        });
         function loadRoomDetail() {
             const params = new URLSearchParams(window.location.search);
             const roomId = params.get('roomId');

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-	<meta charset="UTF-8">
+	<meta charset="UTF-8" />
 	<title>마피아 게임 홈</title>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
-			integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-			crossorigin="anonymous"></script>
+		integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+		crossorigin="anonymous"></script>
 	<style>
 		body {
 			background-color: #1e1e1e;
@@ -63,84 +63,232 @@
 		.btn-logout:hover {
 			background-color: #d44;
 		}
+
+		/* 모달 스타일 */
+		#inviteModal {
+	display: none; /* 처음엔 숨김 */
+	position: fixed;
+	top: 0; left: 0; width: 100%; height: 100%;
+	background: rgba(0,0,0,0.6);
+	align-items: center;
+	justify-content: center;
+	z-index: 9999;
+}
+
+		#inviteModal > div {
+			background: #2a2a2a;
+			color: #f0f0f0;
+			padding: 20px;
+			border-radius: 10px;
+			max-width: 300px;
+			text-align: center;
+		}
+		#inviteModal button {
+			margin: 0 10px;
+			padding: 8px 16px;
+			border: none;
+			border-radius: 6px;
+			color: #fff;
+			cursor: pointer;
+		}
+		#btnAccept {
+			background-color: #4CAF50;
+		}
+		#btnReject {
+			background-color: #f44336;
+		}
 	</style>
 </head>
 <body>
-<div class="container">
-	<div class="title">마피아 게임</div>
+	<div class="container">
+		<div class="title">마피아 게임</div>
 
-	<div class="menu">
+		<div class="menu">
 
-		<a href="friend/inviteFriend.html" class="card auth-only" id="btnFriend">친구 관리</a>
-		<a href="game/createGameRoom.html" class="card auth-only" id="btnCreateGame">게임 생성</a>
-		<a href="game/gameRoomList.html" class="card auth-only" id="btnGameList">게임 목록</a>
+			<a href="friend/inviteFriend.html" class="card auth-only" id="btnFriend">친구 관리</a>
+			<a href="game/createGameRoom.html" class="card auth-only" id="btnCreateGame">게임 생성</a>
+			<a href="game/gameRoomList.html" class="card auth-only" id="btnGameList">게임 목록</a>
 
-		<a href="login.html" class="card guest-only" id="btnLogin">로그인</a>
-		<a href="register.html" class="card guest-only" id="btnRegister">회원가입</a>
+			<a href="login.html" class="card guest-only" id="btnLogin">로그인</a>
+			<a href="register.html" class="card guest-only" id="btnRegister">회원가입</a>
 
-		<button class="btn-logout auth-only" onclick="submitLogoutForm(); return false;" id="btnLogout">로그아웃</button>
+			<button class="btn-logout auth-only" onclick="submitLogoutForm(); return false;" id="btnLogout">로그아웃</button>
+		</div>
+
+		<!-- 숨겨진 로그아웃 폼 -->
+		<form id="logoutForm" action="/my/logout" method="POST" style="display: none;">
+			<input type="hidden" name="_csrf" id="csrfToken" />
+		</form>
 	</div>
 
-	<!-- 숨겨진 로그아웃 폼 -->
-	<form id="logoutForm" action="/my/logout" method="POST" style="display: none;">
-		<input type="hidden" name="_csrf" id="csrfToken">
-	</form>
-</div>
+	<!-- 초대 모달 -->
+	<div id="inviteModal">
+		<div>
+			<p id="inviteText">게임 초대가 도착했습니다.</p>
+			<button id="btnAccept">O</button>
+			<button id="btnReject">X</button>
+		</div>
+	</div>
 
-<script>
-	function setCsrfToken() {
-		return fetch('/csrf-token', {
-			method: 'GET',
-			credentials: 'same-origin'
-		})
-				.then(res => res.json())
-				.then(data => {
-					$('#csrfToken').val(data.token);
-					return data.token;
-				})
-				.catch(err => {
-					console.error("CSRF 토큰 불러오기 실패", err);
-					return null;
-				});
-	}
-
-	async function submitLogoutForm() {
-		const token = await setCsrfToken();
-		if (token) {
-			document.getElementById('logoutForm').submit();
-		} else {
-			alert("CSRF 토큰을 찾을 수 없습니다. 페이지를 새로고침 해보세요.");
-		}
-	}
-
-	async function checkLoginStatus() {
-		try {
-			const res = await fetch('/api/status/auth', {
+	<script>
+		function setCsrfToken() {
+			return fetch('/csrf-token', {
 				method: 'GET',
-				credentials: 'include'
+				credentials: 'same-origin'
+			})
+			.then(res => res.json())
+			.then(data => {
+				$('#csrfToken').val(data.token);
+				return data.token;
+			})
+			.catch(err => {
+				console.error("CSRF 토큰 불러오기 실패", err);
+				return null;
 			});
+		}
 
-			if (res.ok) {
-				// 로그인 O
-				$('.guest-only').hide();
-				$('.auth-only').show();
+		async function submitLogoutForm() {
+			const token = await setCsrfToken();
+			if (token) {
+				document.getElementById('logoutForm').submit();
 			} else {
-				// 로그인 X
+				alert("CSRF 토큰을 찾을 수 없습니다. 페이지를 새로고침 해보세요.");
+			}
+		}
+
+		async function checkLoginStatus() {
+			try {
+				const res = await fetch('/api/status/auth', {
+					method: 'GET',
+					credentials: 'include'
+				});
+
+				if (res.ok) {
+					$('.guest-only').hide();
+					$('.auth-only').show();
+				} else {
+					$('.guest-only').show();
+					$('.auth-only').hide();
+				}
+			} catch (err) {
+				console.error("로그인 상태 확인 실패", err);
 				$('.guest-only').show();
 				$('.auth-only').hide();
 			}
-		} catch (err) {
-			console.error("로그인 상태 확인 실패", err);
-			$('.guest-only').show();
-			$('.auth-only').hide();
 		}
-	}
 
-	$(document).ready(function () {
-		setCsrfToken();
-		checkLoginStatus();
-	});
-</script>
+		$(document).ready(function () {
+			setCsrfToken();
+			checkLoginStatus();
+			startInvitePolling();
+		});
+
+		let isModalOpen = false;
+		let currentRoomId = null;
+
+		function startInvitePolling() {
+		    setInterval(async function () {
+		        if (isModalOpen) return;
+
+		        try {
+		            const response = await fetch('api/user/invite', {
+		                method: 'GET',
+		                credentials: 'include'
+		            });
+
+		            if (!response.ok) {
+		                console.error("초대 목록 요청 실패: HTTP " + response.status);
+		                return;
+		            }
+
+		            const result = await response.json(); // ✅ 본문을 JSON으로 파싱
+		            const invites = result.data?.invites; // ✅ 실제 invites 배열
+
+		            if (Array.isArray(invites) && invites.length > 0 && invites[0]) {
+		                const roomId = invites[0];
+		                showInviteModal(roomId);
+		            }
+		        } catch (error) {
+		            console.error("초대 목록 요청 실패", error);
+		        }
+		    }, 2000);
+		}
+
+
+		function showInviteModal(roomId) {
+			isModalOpen = true;
+			currentRoomId = roomId;
+			$('#inviteText').text(`게임 방 #${roomId} 에 초대되었습니다. 참여하시겠습니까?`);
+			$('#inviteModal').show();
+		}
+
+		$('#btnAccept').on('click', async function() {
+			if (!currentRoomId) return;
+			try {
+				const token = await setCsrfToken();
+				console.log()
+				if (!token) {
+					alert("CSRF 토큰을 가져올 수 없습니다.");
+					return;
+				}
+				const response = await fetch('api/user/invite/accept', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-XSRF-TOKEN': token
+					},
+					credentials: 'include',
+					body: JSON.stringify({ roomId: currentRoomId })
+				});
+				if (response.ok) {
+					window.location.href = `page/gameDetail?roomId=${currentRoomId}`;
+				} else {
+					alert("초대 수락 실패");
+					$('#inviteModal').hide();
+					isModalOpen = false;
+				}
+			} catch (err) {
+				console.error(err);
+				alert("초대 수락 중 오류가 발생했습니다.");
+			}
+		});
+		
+		$('#btnReject').on('click', async function() {
+		    if (!currentRoomId) return;
+		    
+		    try {
+		        const token = await setCsrfToken();
+		        if (!token) {
+		            alert("CSRF 토큰을 가져올 수 없습니다.");
+		            return;
+		        }
+
+		        const response = await fetch(`/api/user/invite?roomId=${currentRoomId}`, {
+		            method: 'DELETE',
+		            headers: {
+		                'X-XSRF-TOKEN': token
+		            },
+		            credentials: 'include'
+		        });
+
+		        if (!response.ok) {
+		            console.error("초대 거절 실패", response.status);
+		        }
+		    } catch (err) {
+		        console.error("초대 거절 중 오류 발생", err);
+		    } finally {
+		        $('#inviteModal').hide();
+		        isModalOpen = false;
+		        currentRoomId = null;
+		    }
+		});
+
+
+		$('#btnReject').on('click', function() {
+			$('#inviteModal').hide();
+			isModalOpen = false;
+			currentRoomId = null;
+		});
+	</script>
 </body>
 </html>
-

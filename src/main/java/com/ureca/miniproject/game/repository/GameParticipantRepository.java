@@ -15,9 +15,10 @@ import com.ureca.miniproject.user.entity.User;
 public interface GameParticipantRepository extends JpaRepository<GameParticipant, Long> {
 
     Boolean existsByUserAndStatus(User user, ParticipantStatus status);
-    List<GameParticipant> findAllByGameRoom_Id(Long roomId);
+    List<GameParticipant> findAllByGameRoom_Id(Long roomId);    
     Optional<GameParticipant> findByUserAndStatus(User user, ParticipantStatus status);
     void deleteByUserAndGameRoom(User user, GameRoom gameRoom);
+    void deleteByUserAndGameRoomAndStatus(User user, GameRoom gameRoom,ParticipantStatus status);
     Optional<GameParticipant> findByUserAndGameRoom_Id(User user, Long roomId);
     @Query("""
     	    SELECT gp.user.userName 
@@ -45,5 +46,14 @@ public interface GameParticipantRepository extends JpaRepository<GameParticipant
     	      AND gp.is_alive = 1
     	""", nativeQuery = true)
     List<String> findAlivePoliceUsernamesByRoomId(@Param("roomId") Long roomId);
+    
+    
+    @Query("""
+    		SELECT gp.gameRoom.id
+    		 FROM GameParticipant gp
+    		 WHERE gp.status = 'INVITED' 
+    		 AND  gp.user.Id = :userId
+    		""")
+    List<Long> findForInvites(@Param("userId") Long userId);
 
 }

@@ -12,6 +12,11 @@ public class PageController {
         return "/game/gameDetail.html";
     }
     
+    @GetMapping("/page/gameDetail/invite")
+    public String inviteGame(@RequestParam("roomId") Long roomId) {    	
+    	return "/user/inviteGameRoom.html";
+    }
+    
     @GetMapping("/login")
     public String login() {
     	return "/login.html";

@@ -63,8 +63,7 @@ public class FriendServiceImpl implements FriendService {
 		
 		FriendId friendId = FriendId.builder().invitee(invitee).inviter(inviter).build();
 		User user = userRepository.findByEmail(myUserDetails.getEmail()).get();				
-		//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw (상호추가 방지)
-		System.out.println(friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED));
+		//login user가 invitee이거나, inviter면서 accepted이거나 waiting된게 있으면 throw (상호추가 방지)		
 		if(!friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), WAITING).isEmpty() ||
 		   !friendRepository.findInvitesRelatedToMe(user.getEmail(),invitee.getEmail(), ACCEPTED).isEmpty() ){
 			throw new InviteAlreadyExistException(INVITE_ALREADY_EXIST);

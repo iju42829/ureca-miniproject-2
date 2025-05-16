@@ -19,9 +19,9 @@ logging:
   level:
     com:
       ureca:
-        miniproject: debug
+        miniproject: info
 
-    org.hibernate.SQL: debug
+    org.hibernate.SQL: info
     org:
       springframework:
-        security: debug
+        security: info

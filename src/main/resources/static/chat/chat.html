@@ -27,6 +27,23 @@
   </div>
 </div>
 
+<div id="mafia-modal" class="modal">
+  <div class="modal-content">
+    <h3>밤에 제거할 대상을 선택하세요</h3>
+    <ul id="mafia-list"></ul>
+    <button onclick="submitMafiaKill()" class="vote-button">제거하기</button>
+  </div>
+</div>
+
+<div id="police-modal" class="modal">
+  <div class="modal-content">
+    <h3>조사할 대상을 선택하세요</h3>
+    <ul id="police-list"></ul>
+    <button onclick="submitPoliceCheck()" class="vote-button">조사하기</button>
+  </div>
+</div>
+
+
 <div class="sidebar">
     <button onclick="toggleRulebook(true)">룰북 보기</button>
     <div id="timer" style="visibility: visible;">남은 시간: <span id="time">0</span>초</div>
@@ -54,7 +71,10 @@ document.addEventListener("DOMContentLoaded",  async () => {
     roomId = parseInt(roomId);
 
     let sender = null;
+    let isDead = false;
+
     let latestParticipants = [];
+    let latestDeadUsers = [];
     const timeSpan = document.getElementById("time");
     const nowTime = await fetchTimer(roomId);
     
@@ -133,14 +153,17 @@ document.addEventListener("DOMContentLoaded",  async () => {
                     	document.getElementById("message").disabled = true;
                         document.querySelector("button[onclick='sendMessage()']").disabled = true;
                         document.getElementById("end-timer-btn").disabled = true;
-                        showVoteModal(latestParticipants, data.deadUsers || []);
+                        const currentDeadUsers = data.deadUsers || [];
+                        if (currentDeadUsers.includes(sender)) return;
+
+                        showVoteModal(latestParticipants, currentDeadUsers);
                     }, 1500);
                     
                     
                 } else if (data.type === "START_TIME") {
                 	document.getElementById("end-timer-btn").disabled = false;
                     displayNotice(data);
-                    if (!data.deadUsers?.includes(sender)) {
+                    if (!latestdeadUsers?.includes(sender)) {
                         document.getElementById("message").disabled = false;
                         document.querySelector("button[onclick='sendMessage()']").disabled = false;
                     }
@@ -154,7 +177,7 @@ document.addEventListener("DOMContentLoaded",  async () => {
 
                 if (data.participants) {
                 	updateParticipantList(data.participants,data.deadUsers);
-                	if (data.deadUsers && data.deadUsers.includes(sender)) {
+                	if (latestdeadUsers && latestdeadUsers.includes(sender)) {
                         document.getElementById("message").disabled = true;
                         document.querySelector("button[onclick='sendMessage()']").disabled = true;
                     }
@@ -171,12 +194,11 @@ document.addEventListener("DOMContentLoaded",  async () => {
             stompClient.subscribe("/user/queue/police/" + roomId, (msg) => {
                 const data = JSON.parse(msg.body);
                 console.log("[경찰 메시지 수신]", data);
-
                 if (data.message?.includes("직업을 알 수 있습니다")) {
                     showPoliceModal(latestParticipants,data.deadUsers);
 
                 } else if (data.message?.includes("님의 직업은 [")) {
-                    alert(data.message);
+                	showCustomAlert(data.message);
                 }
             });
             stompClient.send("/app/chat.send/" + roomId, {}, JSON.stringify({
@@ -202,7 +224,7 @@ document.addEventListener("DOMContentLoaded",  async () => {
 
             if (msg.participants) {
                 updateParticipantList(msg.participants, msg.deadUsers || []);
-                if (data.deadUsers && data.deadUsers.includes(sender)) {
+                if (latestdeadUsers && latestdeadUsers.includes(sender)) {
                     document.getElementById("message").disabled = true;
                     document.querySelector("button[onclick='sendMessage()']").disabled = true;
                 }
@@ -266,10 +288,13 @@ document.addEventListener("DOMContentLoaded",  async () => {
     }
 
     function updateParticipantList(participants, deadUsers) {
+    	if (deadUsers) {
+            latestDeadUsers = deadUsers;
+        }
+        deadUsers = latestDeadUsers;
         latestParticipants = participants;
         const list = document.getElementById("participant-list");
         list.innerHTML = '';
-        deadUsers = deadUsers || [];
         participants.forEach(p => {
             const item = document.createElement("li");
             item.textContent = p;
@@ -343,92 +368,102 @@ document.addEventListener("DOMContentLoaded",  async () => {
         }));
         
     }
-    function showMafiaModal(participants,deadUsers) {
-    	deadUsers = deadUsers || [];
-        const voteList = document.getElementById("vote-list");
-        voteList.innerHTML = '';
-        
+    function showMafiaModal(participants, deadUsers) {
+        deadUsers = deadUsers || [];
+        const mafiaList = document.getElementById("mafia-list");
+        mafiaList.innerHTML = '';
+
         participants.forEach(name => {
-            if (name === sender) return;
-            if (deadUsers.includes(name)) return;  
+            if (name === sender || deadUsers.includes(name)) return;
+
             const li = document.createElement("li");
             li.textContent = name;
             li.onclick = () => {
-                document.querySelectorAll("#vote-list li").forEach(el => el.classList.remove("selected"));
+                document.querySelectorAll("#mafia-list li").forEach(el => el.classList.remove("selected"));
                 li.classList.add("selected");
             };
-            voteList.appendChild(li);
+            mafiaList.appendChild(li);
         });
 
-        document.querySelector("#vote-modal h3").textContent = "밤에 제거할 대상을 선택하세요";
-        document.querySelector(".vote-button").onclick = submitMafiaKill;
-        document.getElementById("vote-modal").style.display = "flex";
+        document.getElementById("mafia-modal").style.display = "flex";
     }
+
     function submitMafiaKill() {
-        const selected = document.querySelector("#vote-list li.selected");
+        const selected = document.querySelector("#mafia-list li.selected");
         if (!selected) {
             alert("대상을 선택하세요.");
             return;
         }
 
         const target = selected.textContent;
-
         stompClient.send("/app/chat.mafia/" + roomId, {}, JSON.stringify({
-            roomId: roomId,
-            sender: sender,
-            message: target,
-            type: "VOTE",
-            participants: latestParticipants
+            sender, roomId, message: target, type: "VOTE", participants: latestParticipants
         }));
 
-        document.getElementById("vote-modal").style.display = "none";
+        document.getElementById("mafia-modal").style.display = "none";
     }
-    function showPoliceModal(participants,deadUsers) {
-    	deadUsers = deadUsers || [];
-        const voteList = document.getElementById("vote-list");
-        voteList.innerHTML = '';
+    function showPoliceModal(participants, deadUsers) {
+        deadUsers = deadUsers || [];
+        const policeList = document.getElementById("police-list");
+        policeList.innerHTML = '';
+
         participants.forEach(name => {
-            if (name === sender) return;
-            if (deadUsers.includes(name)) return;  
+            if (name === sender || deadUsers.includes(name)) return;
+
             const li = document.createElement("li");
             li.textContent = name;
             li.onclick = () => {
-                document.querySelectorAll("#vote-list li").forEach(el => el.classList.remove("selected"));
+                document.querySelectorAll("#police-list li").forEach(el => el.classList.remove("selected"));
                 li.classList.add("selected");
             };
-            voteList.appendChild(li);
+            policeList.appendChild(li);
         });
-        document.querySelector("#vote-modal h3").textContent = "조사할 대상을 선택하세요";
-        document.querySelector(".vote-button").onclick = submitPoliceCheck;
-        document.getElementById("vote-modal").style.display = "flex";
+
+        document.getElementById("police-modal").style.display = "flex";
     }
 
     function submitPoliceCheck() {
-        const selected = document.querySelector("#vote-list li.selected");
+        const selected = document.querySelector("#police-list li.selected");
         if (!selected) {
             alert("조사 대상을 선택하세요.");
             return;
         }
 
         const target = selected.textContent;
-
         stompClient.send("/app/chat.police/" + roomId, {}, JSON.stringify({
-            roomId: roomId,
-            sender: sender,
-            message: target,
-            type: "VOTE",
-            participants: latestParticipants
+            sender, roomId, message: target, type: "VOTE", participants: latestParticipants
         }));
 
-        document.getElementById("vote-modal").style.display = "none";
+        document.getElementById("police-modal").style.display = "none";
     }
 
+    function closeCustomAlert() {
+        overlay.style.display = "none";
+        modal.style.display = "none";
+    }
 
+    function showCustomAlert(message) {
+        messageElem.textContent = message;
+        overlay.style.display = "block";
+        modal.style.display = "block";
+    }
+    const closeBtn = document.getElementById("custom-alert-button");
+    const overlay = document.getElementById("custom-alert-overlay");
+    const modal = document.getElementById("custom-alert");
+    const messageElem = document.getElementById("custom-alert-message");
+    closeBtn.addEventListener("click", closeCustomAlert);
     window.sendMessage = sendMessage;
     window.submitVote = submitVote;
     window.endTimerNow = endTimerNow;
     window.startDebate = startDebate;
     window.toggleRulebook = toggleRulebook;
+    window.showCustomAlert = showCustomAlert;
+    window.showVoteModal = showVoteModal;
+    window.submitVote = submitVote;
+    window.showMafiaModal = showMafiaModal;
+    window.submitMafiaKill = submitMafiaKill;
+    window.showPoliceModal = showPoliceModal;
+    window.submitPoliceCheck = submitPoliceCheck;
 
     document.getElementById("message").addEventListener("keydown", function(event) {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -441,6 +476,14 @@ document.addEventListener("DOMContentLoaded",  async () => {
     await loadChatHistory();
 });
 </script>
+<div id="custom-alert-overlay" style="display: none;"></div>
+<div id="custom-alert" style="display: none;">
+  <div id="custom-alert-box">
+    <p id="custom-alert-message"></p>
+    <button id="custom-alert-button">확인</button>
+  </div>
+</div>
+
 
 </body>
 </html>

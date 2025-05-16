@@ -131,7 +131,6 @@ document.addEventListener("DOMContentLoaded",  async () => {
         await checkIfHost();
         const socket = new SockJS("/ws/chat");
         stompClient = Stomp.over(socket);
-
         stompClient.connect({}, () => {
             stompClient.subscribe("/topic/chat/" + roomId, (msg) => {
                 const data = JSON.parse(msg.body);
@@ -163,7 +162,7 @@ document.addEventListener("DOMContentLoaded",  async () => {
                 } else if (data.type === "START_TIME") {
                 	document.getElementById("end-timer-btn").disabled = false;
                     displayNotice(data);
-                    if (!latestdeadUsers?.includes(sender)) {
+                    if (!latestDeadUsers?.includes(sender)) {
                         document.getElementById("message").disabled = false;
                         document.querySelector("button[onclick='sendMessage()']").disabled = false;
                     }
@@ -177,7 +176,7 @@ document.addEventListener("DOMContentLoaded",  async () => {
 
                 if (data.participants) {
                 	updateParticipantList(data.participants,data.deadUsers);
-                	if (latestdeadUsers && latestdeadUsers.includes(sender)) {
+                	if (latestDeadUsers && latestDeadUsers.includes(sender)) {
                         document.getElementById("message").disabled = true;
                         document.querySelector("button[onclick='sendMessage()']").disabled = true;
                     }
@@ -212,7 +211,7 @@ document.addEventListener("DOMContentLoaded",  async () => {
 
     async function loadChatHistory() {
         const messages = await fetch(`/api/state/${roomId}/messages`).then(res => res.json());
-        
+        console.log(messages);
         messages.forEach(msg => {
             if (msg.type === "TALK") {
                 if (msg.sender === "SYSTEM") return;
@@ -224,7 +223,7 @@ document.addEventListener("DOMContentLoaded",  async () => {
 
             if (msg.participants) {
                 updateParticipantList(msg.participants, msg.deadUsers || []);
-                if (latestdeadUsers && latestdeadUsers.includes(sender)) {
+                if (latestDeadUsers && latestDeadUsers.includes(sender)) {
                     document.getElementById("message").disabled = true;
                     document.querySelector("button[onclick='sendMessage()']").disabled = true;
                 }

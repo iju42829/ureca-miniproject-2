@@ -29,7 +29,7 @@ public class User extends BaseTimeEntity {
 	private String userName;
 	private String password;
 	private String email;
-	private Role role;	
+	private String role;	
 	private Boolean isOnline;
 }
 

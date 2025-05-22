@@ -12,7 +12,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import com.ureca.miniproject.friend.entity.Friend;
 import com.ureca.miniproject.friend.entity.FriendId;
 import com.ureca.miniproject.friend.entity.Status;
-import com.ureca.miniproject.user.entity.Role;
+import com.ureca.miniproject.groupcode.entity.Code;
+import com.ureca.miniproject.groupcode.repository.CommonCodeRepository;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.repository.UserRepository;
 
@@ -24,13 +25,16 @@ class FriendRepositoryTest {
 
     @Autowired
     private UserRepository userRepository; // 임시로 정의한 테스트용 유저 저장소
-
+    
+    @Autowired
+    private CommonCodeRepository commonCodeRepository; 
     private User createUser(String name, String email) {
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         return userRepository.save(User.builder()
                 .userName(name)
                 .email(email)
                 .password("1234")
-                .role(Role.USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build());
     }

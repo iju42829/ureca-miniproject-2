@@ -3,6 +3,8 @@ package com.ureca.miniproject.game.repository;
 import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.entity.GameRoom;
 import com.ureca.miniproject.game.exception.GameParticipantNotFoundException;
+import com.ureca.miniproject.groupcode.entity.Code;
+import com.ureca.miniproject.groupcode.repository.CommonCodeRepository;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,6 @@ import java.util.List;
 import static com.ureca.miniproject.common.BaseCode.GAME_PARTICIPANT_NOT_FOUND;
 import static com.ureca.miniproject.game.entity.ParticipantStatus.JOINED;
 import static com.ureca.miniproject.game.entity.RoomStatus.WAITING;
-import static com.ureca.miniproject.user.entity.Role.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
@@ -31,15 +32,19 @@ class GameParticipantRepositoryTest {
     @Autowired
     private GameRoomRepository gameRoomRepository;
 
+    @Autowired
+    private CommonCodeRepository commonCodeRepository; 
+    
     @Test
     @DisplayName("User와 Status로 존재 여부를 확인한다.")
     void existsByUserAndStatus() {
         // given
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         User user = User.builder()
                 .userName("test")
                 .email("test@test.com")
                 .password("test")
-                .role(USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build();
 
@@ -65,11 +70,12 @@ class GameParticipantRepositoryTest {
     @DisplayName("roomId로 모든 참가자 조회")
     void findAllByGameRoomId() {
         // given
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         User user = User.builder()
                 .userName("test")
                 .email("test@test.com")
                 .password("test")
-                .role(USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build();
 
@@ -95,11 +101,12 @@ class GameParticipantRepositoryTest {
     @DisplayName("User와 Status로 참가자 조회")
     void findByUserAndStatus() {
         // given
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         User user = User.builder()
                 .userName("test")
                 .email("test@test.com")
                 .password("test")
-                .role(USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build();
 
@@ -124,11 +131,12 @@ class GameParticipantRepositoryTest {
     @DisplayName("User와 GameRoom으로 참가자 삭제")
     void deleteByUserAndGameRoom() {
         // given
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         User user = User.builder()
                 .userName("test")
                 .email("test@test.com")
                 .password("test")
-                .role(USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build();
 
@@ -156,11 +164,12 @@ class GameParticipantRepositoryTest {
     @DisplayName("User와 roomId로 참가자 조회")
     void findByUserAndGameRoomId() {
         // given
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         User user = User.builder()
                 .userName("test")
                 .email("test@test.com")
                 .password("test")
-                .role(USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build();
 

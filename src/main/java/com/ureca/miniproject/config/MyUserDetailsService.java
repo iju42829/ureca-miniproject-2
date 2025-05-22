@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.ureca.miniproject.user.entity.Role;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.repository.UserRepository;
 
@@ -29,11 +28,15 @@ public class MyUserDetailsService implements UserDetailsService{
 		if(optionalUser.isPresent()) {
 			
 			User user = optionalUser.get();
-			Role userRole = user.getRole();
-			
-			  List<SimpleGrantedAuthority> authorities = List.of(
-			            new SimpleGrantedAuthority("ROLE_" + userRole.name())
-			        );
+			//공통코드 적용
+//			Role userRole = user.getRole();			
+//			  List<SimpleGrantedAuthority> authorities = List.of(
+//			            new SimpleGrantedAuthority("ROLE_" + userRole.name())
+//			        );
+			String userRole = user.getRole();
+			List<SimpleGrantedAuthority> authorities = List.of(
+				  new SimpleGrantedAuthority("ROLE_" + userRole)
+			  );
 
 			//MyUserDetails 사용			
 			UserDetails userDetails = MyUserDetails.builder()

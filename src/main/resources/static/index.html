@@ -201,8 +201,8 @@
 		                return;
 		            }
 
-		            const result = await response.json(); // ✅ 본문을 JSON으로 파싱
-		            const invites = result.data?.invites; // ✅ 실제 invites 배열
+		            const result = await response.json(); 
+		            const invites = result.data?.invites; 
 
 		            if (Array.isArray(invites) && invites.length > 0 && invites[0]) {
 		                const roomId = invites[0];

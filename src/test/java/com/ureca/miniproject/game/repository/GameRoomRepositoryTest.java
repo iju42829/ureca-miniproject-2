@@ -4,6 +4,8 @@ import com.ureca.miniproject.game.entity.GameParticipant;
 import com.ureca.miniproject.game.entity.GameRoom;
 import com.ureca.miniproject.game.entity.ParticipantStatus;
 import com.ureca.miniproject.game.entity.RoomStatus;
+import com.ureca.miniproject.groupcode.entity.Code;
+import com.ureca.miniproject.groupcode.repository.CommonCodeRepository;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
-import static com.ureca.miniproject.user.entity.Role.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -30,6 +31,9 @@ class GameRoomRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CommonCodeRepository commonCodeRepository; 
+    
     @AfterEach
     void tearDown() {
         gameParticipantRepository.deleteAllInBatch();
@@ -41,11 +45,12 @@ class GameRoomRepositoryTest {
     @DisplayName("RoomStatus로 게임방 목록을 조회합니다.")
     void findAllByRoomStatus() {
         // given
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         User user = User.builder()
                 .userName("test")
                 .email("test@test.com")
                 .password("test")
-                .role(USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build();
 

@@ -11,6 +11,8 @@ import com.ureca.miniproject.game.repository.GameRoomRepository;
 import com.ureca.miniproject.game.service.response.CreateGameRoomResponse;
 import com.ureca.miniproject.game.service.response.GameRoomDetailResponse;
 import com.ureca.miniproject.game.service.response.ListGameRoomResponse;
+import com.ureca.miniproject.groupcode.entity.Code;
+import com.ureca.miniproject.groupcode.repository.CommonCodeRepository;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.exception.UserNotFoundException;
 import com.ureca.miniproject.user.repository.UserRepository;
@@ -24,9 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import static com.ureca.miniproject.common.BaseCode.*;
 import static com.ureca.miniproject.game.entity.ParticipantStatus.JOINED;
 import static com.ureca.miniproject.game.entity.RoomStatus.WAITING;
-import static com.ureca.miniproject.user.entity.Role.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.List;
 
 @Transactional
 @SpringBootTest
@@ -44,6 +47,9 @@ class GameRoomServiceTest {
     @Autowired
     private GameRoomRepository gameRoomRepository;
 
+    @Autowired
+    private static CommonCodeRepository commonCodeRepository; 
+        
     @Test
     @DisplayName("게임방 생성 성공")
     void createGameRoom() {
@@ -193,11 +199,12 @@ class GameRoomServiceTest {
     }
 
     private static User getTestUser() {
+    	List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
         return User.builder()
                 .userName("test")
                 .email("test@test.com")
                 .password("test")
-                .role(USER)
+                .role(roles.get(0).getCodeName())
                 .isOnline(true)
                 .build();
     }

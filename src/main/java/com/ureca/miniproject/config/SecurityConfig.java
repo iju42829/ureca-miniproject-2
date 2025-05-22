@@ -38,7 +38,9 @@ public class SecurityConfig {
 					    "/login",
 					    "/logout",				    
 						"/csrf-token",	
-					    "/my/success/endpoint"
+					    "/my/success/endpoint",
+						"/api/groupcodes/**",
+						"/api/codes/**"
 					).permitAll()					 
 				 .anyRequest().authenticated();
 				 }

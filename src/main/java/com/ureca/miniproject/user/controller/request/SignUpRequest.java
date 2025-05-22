@@ -1,7 +1,5 @@
 package com.ureca.miniproject.user.controller.request;
 
-import com.ureca.miniproject.user.entity.Role;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +14,6 @@ public class SignUpRequest {
 	private String userName;
 	private String password;
 	private String email;	
-	private Role role;
+	private String role;
 	private Boolean isOnline;
 }

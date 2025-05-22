@@ -23,8 +23,9 @@ import com.ureca.miniproject.game.entity.ParticipantStatus;
 import com.ureca.miniproject.game.exception.GameRoomNotFoundException;
 import com.ureca.miniproject.game.repository.GameParticipantRepository;
 import com.ureca.miniproject.game.repository.GameRoomRepository;
+import com.ureca.miniproject.groupcode.entity.Code;
+import com.ureca.miniproject.groupcode.repository.CommonCodeRepository;
 import com.ureca.miniproject.user.controller.request.SignUpRequest;
-import com.ureca.miniproject.user.entity.Role;
 import com.ureca.miniproject.user.entity.User;
 import com.ureca.miniproject.user.exception.UserAlreadyExistException;
 import com.ureca.miniproject.user.exception.UserNotFoundException;
@@ -45,17 +46,21 @@ public class UserServiceImpl implements UserService{
 	private final PasswordEncoder passwordEncoder;
 	private final GameParticipantRepository gameParticipantRepository;
 	private final GameRoomRepository gameRoomRepository;
+	private final CommonCodeRepository commonCodeRepository;
+	
 	public SignUpResponse signUp(SignUpRequest signupRequest) {
 		User user = null;
 		if(userRepository.existsByEmail(signupRequest.getEmail())) {			
 			throw(new UserAlreadyExistException(USER_ALREADY_EXIST));
 		}		
-		System.out.println(signupRequest.getUserName());
+		
+		List<Code> roles = commonCodeRepository.findByGroupCodes(List.of("010")); //010 : userRole
+		
 		user = userRepository.save(
 				User.builder()
 					.userName(signupRequest.getUserName())
 					.password(passwordEncoder.encode(signupRequest.getPassword()))
-					.role(Role.USER)
+					.role(roles.get(0).getCodeKey().getCode()) //userRole : user
 					.email(signupRequest.getEmail())											
 					.build()
 				);			
@@ -70,7 +75,8 @@ public class UserServiceImpl implements UserService{
 	    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 	    MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
 	    String loginUserEmail = myUserDetails.getEmail();
-
+	    
+	    
 	    // 해당 게임방 참가자 중 status == JOINED 인 유저만 필터링
 	    List<GameParticipant> joinedParticipants = gameParticipantRepository.findAllByGameRoom_Id(roomId).stream()
 	        .filter(participant -> participant.getStatus() == ParticipantStatus.JOINED)
